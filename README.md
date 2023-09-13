@@ -98,7 +98,7 @@ public class Customer {
 
 # EntityManagerFactory
 Hal pertama saat kita menggunakan JPA yaitu kita harus membuat object [EntityManagerFactory](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/entitymanagerfactory), Object EntityManagerFactory ini hanya perlu dibuat 1x karena object EntityManagerFactory ini sangatlah berat   
-Untuk membuat EntityManagerFactory hal pertama yang harus dilakukan, yaitu kita harus membuat folder META-INF di dalam folder source, dan didalam folder META-INF kita buat file konfigurasinya dengan nama persistence.xml
+Untuk membuat EntityManagerFactory hal pertama yang harus dilakukan, yaitu kita harus membuat folder META-INF di dalam folder source, dan didalam folder META-INF kita buat file konfigurasinya dengan nama persistence.xml  
 ![META-INF-persistence](src/main/resources/images/META-INF-persistence.png)  
 
 Dan setelah itu masukan configuration xml berikut ini
