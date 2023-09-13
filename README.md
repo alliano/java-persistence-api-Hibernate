@@ -1929,4 +1929,19 @@ public class EntityListenerTest {
 
 ```
 
-# One To One Relationship
+# Relationship
+Kita pasti tidak asing lagi dengan fitut Relasi pada database yang berbasis RDBMS misalnya di Mysql atau Postgresql.  
+Pada real case(kasus nyata), sat kita mengembangkan applikasi yang berkomunikasi dengan database system, seringkali tabel yang kita buat pada database memiliki hubungan kepada tabel lain.  
+Hubungan tersebut dapat kita sebut dengan Relationshep. Relationshep merupakan fitur yang sangat penting, karena dengan adanya Relationshep, data yang disimpan pada database dapat lebih terorganisir
+Berikut ini keuntungan Relationshep :
+ * Struktur data yang terorganisir
+ * Hubungan yang jelas antar data
+ * ACID(Atomicity, Consistency, Isolation, Durability)
+ * dan masih banyak lagi
+
+Ada Tiga jenis Relation pada database :
+|   Relasi  | Deskripsi                                                         |
+|-----------|-------------------------------------------------------------------|
+| OneToOne  | Satu data pada tabel memiliki 1 hubungan data pada tabel lain     |
+| OneToMany | Satu data pada tabel memiliki banyak hubungan data pada tabel lain|
+| ManyToMany| Banyak data pada tabel memiliki banyak data pada tabel lain       |
