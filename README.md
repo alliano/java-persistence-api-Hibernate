@@ -11,19 +11,19 @@ Berikut ini yang harus dikuasai sebelum mempelajari JPA & Hibernate
 Orm merupakan suatu teknik pemetaan atau teknik merubah suatu tabel menjadi Objct pada bahasa pemograman.  
 Dengan menggunakan ORM kita dapat memmanipulasi data didalam database menggunakan object pada bahasa pemohraman  
 ORM akan bertanggung jawab dalam melakukan sinkronisasi data yang kita ubah pada object dengan data di database, misalnya proses CRUD(Create Read Update Delete)
-Dengan menggunakan ORM kita dapat memanipulasi data didalam database seperti kita memanipulasi data didalam object, tampa harus menulis perinth SQL secara manual.
+Dengan menggunakan ORM kita dapat memanipulasi data didalam database seperti kita memanipulasi data pada object, tampa harus menulis perinth SQL secara manual.
 
 # JPA(Java Persistance API)
-JPA adalah salahsastu standarisasi ORM(Object Relational Mapping) di bahasa pemograman JAVA  
+JPA adalah salah sastu standarisasi ORM(Object Relational Mapping) di bahasa pemograman JAVA  
 JPA merupakan bagian dari JEE(Jakarta Enterprise Edition), JPA ini sangat populer digunakan oleh java programmer karena dengan menggunakan JPA java programmer dipermudah untuk melakukan Query ke database.  
 [jakarta.ee](https://jakarta.ee/specifications/)
 
 # Hibernate
-JPA(Java Persistance Api) merupakan spesifikasi ORM di bahasa pemograman java, artinya JPA hanyalah berisi kontrak interface dan untuk menggunakanya kita membutuhkan implementasinya atau membutuhkan Provoder. 
+JPA(Java Persistance Api) merupakan spesifikasi ORM pada bahasa pemograman java, artinya JPA hanyalah berisi kontrak interface dan untuk menggunakanya kita membutuhkan implementasinya atau membutuhkan Provider. 
 terdapat banyak sekali JPA provider untuk saat ini, salah satunya yaitu [Hibernate](https://hibernate.org/orm/)
 
 ## Create Project
-Untuk membuat Project kita dapat memanfaatkan https://start.spring.io dan jangan lupa tambahkan dependencies Mysql Driver dan Spring data JPA
+Untuk membuat Project kita dapat memanfaatkan https://start.spring.io dan jangan lupa tambahkan dependencies Mysql Driver dan Spring data JPA, Lombok
 
 # @Entity
 Annotation [@Entity](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/entity) merupakan annotation yang digunakan untuk merepresentasikan Tabel di database  
