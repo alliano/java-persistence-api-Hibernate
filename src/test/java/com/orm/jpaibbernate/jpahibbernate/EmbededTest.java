@@ -5,13 +5,11 @@ import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import com.orm.jpaibbernate.jpahibbernate.entities.Departement;
 import com.orm.jpaibbernate.jpahibbernate.entities.Seller;
 import com.orm.jpaibbernate.jpahibbernate.entities.embededs.Contact;
 import com.orm.jpaibbernate.jpahibbernate.entities.embededs.DepatementId;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;

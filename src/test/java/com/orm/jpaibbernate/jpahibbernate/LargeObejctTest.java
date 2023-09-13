@@ -11,42 +11,39 @@ import org.hibernate.engine.jdbc.ClobProxy;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import com.orm.jpaibbernate.jpahibbernate.entities.Admin;
 import com.orm.jpaibbernate.jpahibbernate.entities.Image;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
-public class LageObjectTest {
+public class LargeObejctTest {
     
-    private EntityManager entityManager;
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
-    public void testLageObject() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-        try {
-            transaction.begin();
-            Image image = new Image();
-            image.setDescription("");
-            byte[] bytes = Files.readAllBytes(Path.of(getClass().getResource("/images/META-INF-persistence.png").toURI()));
-            image.setImage(bytes);
-            this.entityManager.persist(image);
-            transaction.commit();
-        } catch (Exception e) {
-            transaction.rollback();
-            e.printStackTrace();
-        }
+    public void testLageObject() throws IOException, URISyntaxException {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Image image = new Image();
+        image.setDescription("");
+        byte[] bytes = Files.readAllBytes(Path.of(getClass().getResource("/images/META-INF-persistence.png").toURI()));
+        image.setImage(bytes);
+        entityManager.persist(image);
+        transaction.commit();
     }
 
     @Test
     public void testAdmin() throws IOException, URISyntaxException {
-        EntityTransaction transaction = this.entityManager.getTransaction();
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
         Assertions.assertDoesNotThrow(() -> {
             Blob blobProxyPersisteceImage = BlobProxy.generateProxy(Files.readAllBytes(Path.of(getClass().getResource("/images/META-INF-persistence.png").toURI())));
@@ -55,7 +52,7 @@ public class LageObjectTest {
             admin.setName("Admin1");
             admin.setPicture(blobProxyPersisteceImage);
             admin.setDescription(clobProxyDescription);
-            this.entityManager.persist(admin);
+            entityManager.persist(admin);
         });
         transaction.commit();
     }

@@ -7,32 +7,29 @@ import org.junit.jupiter.api.Test;
 import com.orm.jpaibbernate.jpahibbernate.entities.Category;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 public class DateTimeTest {
     
-    private EntityManager entityManager;
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testDateTime() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-        try {
-            transaction.begin();
-            Category category = new Category();
-            category.setName("Some Category name");
-            category.setDescription("Some description");
-            category.setCreatedAt(LocalDateTime.now());
-            category.setUpdatedAt(Calendar.getInstance());
-            this.entityManager.persist(category);
-            transaction.commit();
-        } catch (Exception e) {
-            transaction.rollback();
-            e.printStackTrace();
-        }
+     EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+     EntityTransaction transaction = entityManager.getTransaction();
+     transaction.begin();
+     Category category = new Category();
+     category.setName("Some Category name");
+     category.setDescription("Some description");
+     category.setCreatedAt(LocalDateTime.now());
+     category.setUpdatedAt(Calendar.getInstance());
+     entityManager.persist(category);
+     transaction.commit();
     }
 }

@@ -288,86 +288,71 @@ import org.junit.jupiter.api.TestMethodOrder;
 import com.orm.jpaibbernate.jpahibbernate.entities.Customer;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 @TestMethodOrder(value = MethodOrderer.OrderAnnotation.class)
 public class CrudOperationTest {
-    
-    private EntityManager entityManager;
+
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test @Order(value = 1)
     public void testInsert() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-        try {
-            transaction.begin();
-            Customer customer = new Customer();
-            customer.setId("C001");
-            customer.setName("Alliano");
-            // melakukan insert ke database menggunakan method persist()
-            this.entityManager.persist(customer);
-            transaction.commit();
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-            transaction.rollback();
-        }
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Customer customer = new Customer();
+        customer.setId("C001");
+        customer.setName("Alliano");
+        // melakukan insert ke database menggunakan method persist()
+        entityManager.persist(customer);
+        transaction.commit();
     }
 
     @Test @Order(value = 2)
     public void testUpdate() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-        try {
-            transaction.begin();
-            Customer customer = new Customer();
-            // disini kita cukup memasukan primarykey dari data atau entity yang kita ingin update
-            customer.setId("C001");
-            customer.setName("Fara");
-            // melakukan update
-            Customer costumerUpdate = this.entityManager.merge(customer);
-            Assertions.assertNotNull(costumerUpdate);
-            Assertions.assertEquals("C001", costumerUpdate.getId());
-            Assertions.assertEquals("Fara", costumerUpdate.getName());
-            transaction.commit();
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-            transaction.rollback();
-        }
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Customer customer = new Customer();
+        // disini kita cukup memasukan primarykey dari data atau entity yang kita ingin update
+        customer.setId("C001");
+        customer.setName("Fara");
+        // melakukan update
+        Customer costumerUpdate = entityManager.merge(customer);
+        Assertions.assertNotNull(costumerUpdate);
+        Assertions.assertEquals("C001", costumerUpdate.getId());
+        Assertions.assertEquals("Fara", costumerUpdate.getName());
+        transaction.commit();
     }
 
     @Test @Order(value = 3)
     public void testSelect() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-        try {
-            transaction.begin();
-            Customer customer = this.entityManager.find(Customer.class, "C001");
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Customer customer = entityManager.find(Customer.class, "C001");
 
-            Assertions.assertNotNull(customer);
-            Assertions.assertEquals("C001", customer.getId());
-            Assertions.assertEquals("Fara", customer.getName());
-            transaction.commit();
-        } catch (Throwable thiThrowable) {
-            thiThrowable.printStackTrace();
-            transaction.rollback();
-        }
+        Assertions.assertNotNull(customer);
+        Assertions.assertEquals("C001", customer.getId());
+        Assertions.assertEquals("Fara", customer.getName());
+        transaction.commit();
     }
 
     @Test @Order(value = 4)
     public void testDelete() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-        try {
-            transaction.begin();
-            Customer customer = this.entityManager.find(Customer.class, "C001");
-            // menghapus data/entity
-            this.entityManager.remove(customer);
-            transaction.commit();
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
-            transaction.rollback();
-        }
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Customer customer = entityManager.find(Customer.class, "C001");
+        // menghapus data/entity
+        entityManager.remove(customer);
+        transaction.commit();
     }
 }
 ```
@@ -417,34 +402,29 @@ import org.junit.jupiter.api.Test;
 import com.orm.jpaibbernate.jpahibbernate.entities.Customer;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 public class ColumnAnnotationTest {
-    
-    private EntityManager entityManager;
+
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testColumnAnnotation() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-
-        try {
-            transaction.begin();
-            Customer customer = new Customer();
-            // Disini kita tidak meng set Id nya, karena Id nya
-            // secara otomatis di generate kan
-            customer.setId("C002");
-            customer.setName("Naila");
-            customer.setPrimaryEmail("naila@gmail.com");
-            this.entityManager.persist(customer);
-            transaction.commit();
-        } catch (Throwable throwable) {
-            transaction.rollback();
-        }
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Customer customer = new Customer();
+        customer.setId("C002");
+        customer.setName("Naila");
+        customer.setPrimaryEmail("naila@gmail.com");
+        entityManager.persist(customer);
+        transaction.commit();
     }
 }
 ```
@@ -499,38 +479,37 @@ public class Category {
 ``` java
 package com.orm.jpaibbernate.jpahibbernate;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.orm.jpaibbernate.jpahibbernate.entities.Category;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 public class GeneratedValueTest {
-    
-    private EntityManager entityManager;
+
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testGeneratedValue() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-
-        try {
-            transaction.begin();
-            Category category = new Category();
-            // Disini kita tidak meng set Id nya, karena Id nya
-            // secara otomatis di generate kan
-            category.setName("Smartpone");
-            category.setDescription("some description here");
-            this.entityManager.persist(category);
-            transaction.commit();
-        } catch (Throwable throwable) {
-            transaction.rollback();
-        }
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Category category = new Category();
+        // Disini kita tidak meng set Id nya, karena Id nya
+        // secara otomatis di generate kan
+        category.setName("Smartpone");
+        category.setDescription("some description here");
+        entityManager.persist(category);
+        transaction.commit();
     }
 }
 ```
@@ -592,40 +571,42 @@ Setalh itu kita dapat mengujinya dengan Junit
 ``` java
 package com.orm.jpaibbernate.jpahibbernate;
 
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
 import com.orm.jpaibbernate.jpahibbernate.entities.Customer;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
+@TestMethodOrder(value = MethodOrderer.OrderAnnotation.class)
 public class DataTypeTest {
-    
-    private EntityManager entityManager;
+
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
-    public void setUp(){
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testDataType() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-
-        try{
-            transaction.begin();
-            Customer customer = new Customer();
-            customer.setId("C003");
-            customer.setName("Uchiha Itachi");
-            customer.setPrimaryEmail("itachiUchiha@akatsuki.ac.id");
-            customer.setMeried(false);
-            // Saat proses insert nanti, tipe data byte akan di konversi menjadi TINYINT
-            customer.setAge((byte)32);
-            this.entityManager.persist(customer);
-            transaction.commit();
-        } catch(Throwable throwable) {
-            transaction.rollback();
-        }
+      EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+      EntityTransaction transaction = entityManager.getTransaction();
+      transaction.begin();
+      Customer customer = new Customer();
+      customer.setId("C003");
+      customer.setName("Uchiha Itachi");
+      customer.setPrimaryEmail("itachiUchiha@akatsuki.ac.id");
+      customer.setMeried(false);
+      // Saat proses insert, attribut age akan di konversi ke TINYINT oleh jpa
+      customer.setAge((byte)32);
+      Assertions.assertDoesNotThrow(() -> entityManager.persist(customer));
+      transaction.commit();
     }
 }
 ```
@@ -710,35 +691,31 @@ import com.orm.jpaibbernate.jpahibbernate.entities.Customer;
 import com.orm.jpaibbernate.jpahibbernate.entities.CustomerType;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 public class EnumTypeTest {
-    
-    private EntityManager entityManager;
+
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testEnumType() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-
-        try {
-            transaction.begin();
-            Customer customer = new Customer();
-            customer.setId("C004");
-            customer.setName("Izumi");
-            customer.setPrimaryEmail("izunauchiha@uchiha.com");
-            customer.setAge((byte)20);
-            customer.setType(CustomerType.SILVER);
-            this.entityManager.persist(customer);
-            transaction.commit();
-        } catch(Throwable throwable) {
-            transaction.rollback();
-            throwable.printStackTrace();
-        }
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Customer customer = new Customer();
+        customer.setId("C004");
+        customer.setName("Izumi");
+        customer.setPrimaryEmail("izunauchiha@uchiha.com");
+        customer.setAge((byte)20);
+        customer.setType(CustomerType.SILVER);
+        entityManager.persist(customer);
+        transaction.commit();
     }
 }
 ```
@@ -832,33 +809,30 @@ import org.junit.jupiter.api.Test;
 import com.orm.jpaibbernate.jpahibbernate.entities.Category;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 public class DateTimeTest {
     
-    private EntityManager entityManager;
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testDateTime() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-        try {
-            transaction.begin();
-            Category category = new Category();
-            category.setName("Some Category name");
-            category.setDescription("Some description");
-            category.setCreatedAt(LocalDateTime.now());
-            category.setUpdatedAt(Calendar.getInstance());
-            this.entityManager.persist(category);
-            transaction.commit();
-        } catch (Exception e) {
-            transaction.rollback();
-            e.printStackTrace();
-        }
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Category category = new Category();
+        category.setName("Some Category name");
+        category.setDescription("Some description");
+        category.setCreatedAt(LocalDateTime.now());
+        category.setUpdatedAt(Calendar.getInstance());
+        entityManager.persist(category);
+        transaction.commit();
     }
 }
 ```
@@ -921,40 +895,36 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.hibernate.engine.jdbc.BlobProxy;
-import org.hibernate.engine.jdbc.ClobProxy;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Admin;
 import com.orm.jpaibbernate.jpahibbernate.entities.Image;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
-public class LageObjectTest {
+public class LargeObejctTest {
     
-    private EntityManager entityManager;
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
-    public void testLageObject() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
-        try {
-            transaction.begin();
-            Image image = new Image();
-            image.setDescription("");
-            byte[] bytes = Files.readAllBytes(Path.of(getClass().getResource("/images/META-INF-persistence.png").toURI()));
-            image.setImage(bytes);
-            this.entityManager.persist(image);
-            transaction.commit();
-        } catch (Exception e) {
-            transaction.rollback();
-            e.printStackTrace();
-        }
+    public void testLageObject() throws IOException, URISyntaxException {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Image image = new Image();
+        image.setDescription("");
+        byte[] bytes = Files.readAllBytes(Path.of(getClass().getResource("/images/META-INF-persistence.png").toURI()));
+        image.setImage(bytes);
+        entityManager.persist(image);
+        transaction.commit();
     }
 }
 ```
@@ -1026,6 +996,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Blob;
 import java.sql.Clob;
+
 import org.hibernate.engine.jdbc.BlobProxy;
 import org.hibernate.engine.jdbc.ClobProxy;
 import org.junit.jupiter.api.Assertions;
@@ -1034,20 +1005,22 @@ import org.junit.jupiter.api.Test;
 import com.orm.jpaibbernate.jpahibbernate.entities.Admin;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 public class TransientTest {
     
-    private EntityManager entityManager;
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testTransient() throws IOException, URISyntaxException {
-        EntityTransaction transaction = this.entityManager.getTransaction();
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
         Admin admin = new Admin();
         Blob imageBlob = BlobProxy.generateProxy(Files.readAllBytes(Path.of(getClass().getResource("/images/META-INF-persistence.png").toURI())));
@@ -1058,7 +1031,7 @@ public class TransientTest {
         // nilai dari full name ini nanti tidak diikutkan dimasukan dalam database
         // karena atribut fullName di annotasi @Transient
         admin.setFullName("example fullName");
-        Assertions.assertDoesNotThrow(() ->this.entityManager.persist(admin));
+        Assertions.assertDoesNotThrow(() -> entityManager.persist(admin));
         transaction.commit();
     }
 }
@@ -1153,35 +1126,39 @@ public class Seller {
 ``` java
 package com.orm.jpaibbernate.jpahibbernate;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import com.orm.jpaibbernate.jpahibbernate.entities.Seller;
 import com.orm.jpaibbernate.jpahibbernate.entities.embededs.Contact;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 public class EmbededTest {
-    
-    private EntityManager entityManager;
+
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testEmbeded() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
         Assertions.assertDoesNotThrow(() -> {
             Contact contact = new Contact("Alliano", "alfarez", "081341079104", "allianoonanimus@yandex.co.id");
             Seller seller = new Seller();
+            seller.setId(UUID.randomUUID().toString().substring(0, 10));
             seller.setStoreName("Gatgatin.id");
             seller.setContact(contact);
-            this.entityManager.persist(seller);
+            entityManager.persist(seller);
         });
         transaction.commit();
     }
@@ -1264,33 +1241,39 @@ public class Departement {
 ``` java
 package com.orm.jpaibbernate.jpahibbernate;
 
+import java.util.UUID;
+
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.orm.jpaibbernate.jpahibbernate.entities.Departement;
+import com.orm.jpaibbernate.jpahibbernate.entities.embededs.Contact;
 import com.orm.jpaibbernate.jpahibbernate.entities.embededs.DepatementId;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 public class EmbededTest {
-    
-    private EntityManager entityManager;
+
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testEmbededId() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
 
-        DepatementId depatementId = new DepatementId("xyzy", "xyz");
+        DepatementId depatementId = new DepatementId("xyzy".concat(UUID.randomUUID().toString().substring(0, 5)), "xyz".concat(UUID.randomUUID().toString().substring(0, 5)));
         Departement departement = new Departement();
         departement.setDepatementId(depatementId);
         departement.setName("some name here");
-        this.entityManager.persist(departement);
+        entityManager.persist(departement);
         transaction.commit();
     }
 }
@@ -1301,6 +1284,8 @@ Untuk melakukan find data pada entity yang memiliki 2 primary key, kita perlu se
 ``` java
 package com.orm.jpaibbernate.jpahibbernate;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1308,37 +1293,39 @@ import com.orm.jpaibbernate.jpahibbernate.entities.Departement;
 import com.orm.jpaibbernate.jpahibbernate.entities.embededs.DepatementId;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
 public class EmbededTest {
-    
-    private EntityManager entityManager;
+
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testEmbededId() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
 
-        DepatementId depatementId = new DepatementId("xyzy", "xyz");
+        DepatementId depatementId = new DepatementId("xyzy".concat(UUID.randomUUID().toString().substring(0, 5)), "xyz".concat(UUID.randomUUID().toString().substring(0, 5)));
         Departement departement = new Departement();
         departement.setDepatementId(depatementId);
         departement.setName("some name here");
-        this.entityManager.persist(departement);
+        entityManager.persist(departement);
         transaction.commit();
     }
 
     @Test
     public void testFindWithEmbededId() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
-        // kita perlu sebutkan kedua primary key untuk melakukan find
         DepatementId depatementId = new DepatementId("xyzy", "xyz");
-        Departement departement = this.entityManager.find(Departement.class, depatementId);
+        Departement departement = entityManager.find(Departement.class, depatementId);
         Assertions.assertNotNull(departement);
         Assertions.assertEquals("xyzy", departement.getDepatementId().getDepartementId());
 
@@ -1430,7 +1417,6 @@ public class Customer {
 package com.orm.jpaibbernate.jpahibbernate;
 
 import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1438,20 +1424,22 @@ import com.orm.jpaibbernate.jpahibbernate.entities.Customer;
 import com.orm.jpaibbernate.jpahibbernate.entities.CustomerType;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
-public class ColctionAttributTest {
+public class CollectionAttributeTest {
  
-    private EntityManager entityManager;
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testAttributeCollection() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
         ArrayList<String> hobbies = new ArrayList<String>(List.of("Hiking", "Flxing", "Farming"));
 
@@ -1462,8 +1450,7 @@ public class ColctionAttributTest {
         customer.setPrimaryEmail("onanymus@yandex.com");
         customer.setType(CustomerType.SILVER);
         customer.setHobbies(hobbies);
-
-        this.entityManager.persist(customer);
+        entityManager.persist(customer);
         transaction.commit();
     }
 }
@@ -1562,20 +1549,22 @@ import com.orm.jpaibbernate.jpahibbernate.entities.Customer;
 import com.orm.jpaibbernate.jpahibbernate.entities.CustomerType;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
-public class ColctionAttributTest {
+public class CollectionAttributeTest {
  
-    private EntityManager entityManager;
+    private EntityManagerFactory entityManagerFactory;
 
     @BeforeEach
     public void setUp() {
-        this.entityManager = EntityManagerUtil.getEntityManagerFactory().createEntityManager();
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
     }
 
     @Test
     public void testMapAtribute() {
-        EntityTransaction transaction = this.entityManager.getTransaction();
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
         Map<String, Integer> skills = new HashMap<String, Integer>();
         skills.put("Java", 90);
@@ -1589,7 +1578,7 @@ public class ColctionAttributTest {
         customer.setPrimaryEmail("example@gmail.com");
         customer.setType(CustomerType.GOLD);
         customer.setSkills(skills);
-        Assertions.assertDoesNotThrow(() -> this.entityManager.persist(customer));
+        Assertions.assertDoesNotThrow(() -> entityManager.persist(customer));
         transaction.commit();
     }
 }
