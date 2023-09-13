@@ -1,0 +1,14 @@
+version: '1.9'
+services:
+  mysql:
+    image: mysql:latest
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=bagatal
+      - MYSQL_USER=alliano-dev
+      - MYSQL_PASSWORD=bagatal
+    volumes:
+      - pg_volume:/var/lib/mysql
+volumes:
+  pg_volume : {}

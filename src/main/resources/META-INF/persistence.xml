@@ -1,0 +1,35 @@
+<persistence 
+            xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
+            http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd"
+            version="2.1"
+            >
+    <persistence-unit name="BELAJAR-JPA">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <!-- class entity -->
+        <!-- tujuanya kita definisikan disini, agar saat pertama applikasi nyala -->
+        <!-- entity class tersebut langsung di load -->
+        <!-- jikalau kita tidak definisikan class nya, maka class entity tersebut akan diload -->
+        <!-- saat Entity tersebut dipanggil -->
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Customer</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Category</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Image</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Admin</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Seller</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Departement</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.User</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Ewallet</class>
+
+        <properties>
+            <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"></property>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/java_persistence_api"></property>
+            <property name="jakarta.persistence.jdbc.user" value="root"></property>
+            <property name="jakarta.persistence.jdbc.password" value="bagatal"></property>
+            <!-- konfigurasi hibernate -->
+            <property name="hibernate.show_sql" value="true"></property> <!--digunakan untuk menampilkan sql ke konsol-->
+            <property name="hibernate.format_sql" value="true"></property> <!-- digunakan untuk memformat sql biar mudah dibaca di konsol-->
+        </properties>
+    </persistence-unit>
+</persistence>
