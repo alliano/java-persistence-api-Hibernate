@@ -1945,3 +1945,104 @@ Ada Tiga jenis Relation pada database :
 | OneToOne  | Satu data pada tabel memiliki 1 hubungan data pada tabel lain     |
 | OneToMany | Satu data pada tabel memiliki banyak hubungan data pada tabel lain|
 | ManyToMany| Banyak data pada tabel memiliki banyak data pada tabel lain       |
+
+# One to One Relationshep
+Seperti yang terlah dijelaskan diatas OneToOne relationshep adalah, relasi 1 data pada tabel memiliki hubungan(berrelasi) dengan 1 data pada tabel lain.  
+Untuk membuat relasi OneToOne ada 2 cara :
+ * Menggunakan Foreigen Key
+ * Primary Key
+
+Jpa mendukung kedua cara tersebut, Dengan menggunakan annotation [@OneToOne](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/onetoone) pada Attribut.  
+
+## (Example case) One To One with Primary Key
+Misalnya disini kita memiliki tabel stores yang menyimpan data-data toko misalnya seperti nama toko dan sebagainya
+``` sql
+CREATE TABLE stores(
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(50),
+    email VARCHAR(50),
+    PRIMARY KEY(id)
+) ENGINE InnoDB;
+```
+Dan kita juga memiliki tabel addresses yang menyimpan data alamat
+
+``` sql
+CREATE TABLE addresses(
+    id INT NOT NULL AUTO_INCREMENT,
+    street VARCHAR(100),
+    province VARCHAR(100), 
+    city VARCHAR(100),
+    seller_id VARCHAR(100),
+    PRIMARY KEY (id),
+    FOREIGN KEY fk_addresses_x_stores (id) REFERENCES stores (id)
+) ENGINE InnoDB;
+```
+Tabel addresses tersebut memiliki reasi One To One ke tabel stores, yang artinya 1 data pada tabel stores hanya boleh memiliki 1 data pada tabel addresses.  
+  
+Setelah kita membuat tabel stores dan addresses yang berelasi OneToMany, langkah selanjutnya kita buatkan Entity class untk merepresentasikan kedua tabel tersebut beserta relasinya.  
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "addresses")
+public class Address {
+    
+    @Id
+    private Long id;
+
+    private String province;
+
+    private String street;
+
+    private String city;
+
+    @OneToOne
+    @PrimaryKeyJoinColumn(name = "id", referencedColumnName = "id")
+    private Store store;
+}
+```
+#### KET :  
+*Untuk membuat representasi relasi pada Entity class, kita harus menambahkan attribut pada class entity yang bertipe Class Entity yang kita ingin relasikan(kalam kasus kita class Store).  
+Setalah itu attribut tersebut kita annotation dengan [@OneToOne](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/onetoone), untuk memberi tahu JPA bahwa atribut ini berelasi dengan entity lain, dengan jenis relasi OneToOne.*  
+  
+*Setalah itu kita berikan annotation [@PrimaryKeyJoinColumn](https://jakarta.ee/specifications/webprofile/9.1/apidocs/?jakarta/persistence/PrimaryKeyJoinColumn.html) pada atribut entity tersebut(class entity Store), untuk memberitahu JPA mekanisme dari Join column nya, Disini kita menggunakan @PrimaryKeyJoinColumn karena FOREIGN KEY nya mengunakan kolom Id dari kedua tabel*
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "stores")
+public class Store {
+    
+    @Id
+    private Long id;
+
+    private String name;
+
+    private String email;
+
+    @OneToOne(mappedBy = "store")
+    private Address address;
+}
+```
+#### KET :  
+*Pada class entity Store kita telah definisikan mekanisme join column nya, maka pada class Address cukup tambahkan attribut Class entity yang ingin direlasikan(class entity Addres) dan kita annotasi dengan @OneToOne dan kita berit tau JPA *
