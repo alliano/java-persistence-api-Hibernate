@@ -1979,7 +1979,7 @@ CREATE TABLE addresses(
 ```
 Tabel addresses tersebut memiliki reasi One To One ke tabel stores, yang artinya 1 data pada tabel stores hanya boleh memiliki 1 data pada tabel addresses.  
   
-Setelah kita membuat tabel stores dan addresses yang berelasi OneToMany, langkah selanjutnya kita buatkan Entity class untk merepresentasikan kedua tabel tersebut beserta relasinya.  
+Setelah kita membuat tabel stores dan addresses yang berelasi OneToOne, langkah selanjutnya kita buatkan Entity class untk merepresentasikan kedua tabel tersebut beserta relasinya.  
 
 ``` java
 package com.orm.jpaibbernate.jpahibbernate.entities;
@@ -2005,17 +2005,21 @@ public class Address {
     private String street;
 
     private String city;
-
+    /**
+     * name, disini reference ke attribut id pada entity Address
+     * referenceJoinColumn, disini reference ke attribut id pada class entity Store
+     * */
     @OneToOne
     @PrimaryKeyJoinColumn(name = "id", referencedColumnName = "id")
     private Store store;
 }
 ```
 #### KET :  
-*Untuk membuat representasi relasi pada Entity class, kita harus menambahkan attribut pada class entity yang bertipe Class Entity yang kita ingin relasikan(kalam kasus kita class Store).  
-Setalah itu attribut tersebut kita annotation dengan [@OneToOne](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/onetoone), untuk memberi tahu JPA bahwa atribut ini berelasi dengan entity lain, dengan jenis relasi OneToOne.*  
+*Untuk membuat representasi relasi pada class entity Store, kita harus menambahkan attribut pada class entity Store yang bertipe Class Entity yang kita ingin relasikan(kalam kasus kita class Store).  
+Setelah itu attribut tersebut kita annotation dengan [@OneToOne](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/onetoone), untuk memberi tahu JPA bahwa atribut ini berelasi dengan entity lain, dengan jenis relasi OneToOne.*  
   
-*Setalah itu kita berikan annotation [@PrimaryKeyJoinColumn](https://jakarta.ee/specifications/webprofile/9.1/apidocs/?jakarta/persistence/PrimaryKeyJoinColumn.html) pada atribut entity tersebut(class entity Store), untuk memberitahu JPA mekanisme dari Join column nya, Disini kita menggunakan @PrimaryKeyJoinColumn karena FOREIGN KEY nya mengunakan kolom Id dari kedua tabel*
+*Setalah itu kita berikan annotation [@PrimaryKeyJoinColumn](https://jakarta.ee/specifications/webprofile/9.1/apidocs/?jakarta/persistence/PrimaryKeyJoinColumn.html) pada atribut entity tersebut(class entity Store), untuk memberitahu JPA mekanisme dari Join column nya.  
+Disini kita menggunakan @PrimaryKeyJoinColumn karena FOREIGN KEY nya mengunakan kolom Id dari kedua tabel*
 
 ``` java
 package com.orm.jpaibbernate.jpahibbernate.entities;
@@ -2045,4 +2049,50 @@ public class Store {
 }
 ```
 #### KET :  
-*Pada class entity Store kita telah definisikan mekanisme join column nya, maka pada class Address cukup tambahkan attribut Class entity yang ingin direlasikan(class entity Addres) dan kita annotasi dengan @OneToOne dan kita berit tau JPA *
+*Pada class entity Store kita telah definisikan mekanisme join column nya, maka pada class Address cukup tambahkan attribut Class entity yang ingin direlasikan(class entity Addres) dan kita annotasi dengan @OneToOne dan kita berit tau JPA dimana lokasi mekanisme join column nya dengan menggunakan mappedBy dan diisi dengan attribut Address yang di annotasi dengan @OneToOne*
+
+``` java 
+package com.orm.jpaibbernate.jpahibbernate;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Address;
+import com.orm.jpaibbernate.jpahibbernate.entities.Store;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+
+public class OneToOnePrimaryKeyForeignKey {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testInsert() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        Store store = new Store();
+        store.setId(1L);
+        store.setEmail("allstore@gmail.com");
+        store.setName("alastore");
+        entityManager.persist(store);
+
+        Address address = new Address();
+        address.setId(1L);
+        address.setProvince("Jawa Barat");
+        address.setStreet("Mawar Mereah");
+        address.setCity("Bandung");
+        address.setStore(store);
+        entityManager.persist(address);
+        transaction.commit();
+    }
+}
+```
