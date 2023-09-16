@@ -2096,3 +2096,174 @@ public class OneToOnePrimaryKeyForeignKey {
     }
 }
 ```
+
+## (Example case) One To One with foreign key
+Selain menggunakan primary key relasi oneToOne, kita juga bisa melakukan dengan menggunakan kolom foreign key.  
+Caranya cukuplah mudah, kita hanya perlu menambahkan kolom unique pada tabel reference nya.  
+Oke agar lebih mudah dipahami mari kita langusng di kasus nyata.  
+  
+Misalnyakan disini kita memiliki tabel mahasiswa
+``` sql
+CREATE TABLE mahasiswa(
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100),
+    email VARCHAR(100),
+    PRIMARY KEY(id)
+) ENGINE InnoDB;
+```
+Dan juga kita memiliki tabel prodi, yang mana tabel prodi memiliki relasi one to one ke tabel mahasiswa
+``` sql
+CREATE TABLE prodi(
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100),
+    mahasiswa_id INT UNIQUE NOT NULL,
+    PRIMARY KEY(id),
+    FOREIGN KEY fk_prodi_x_mahasiswa FOREIGN KEY(mahasiswa_id) REFERENCES mahasiswa(id)
+) ENGINE InnoDB;
+
+```
+#### KET : 
+pada tabel prodi kita akan menambahkan kolom mahasiswa_id untuk menyimpan id unique dari tabel mahasiswa, untuk merelasikan kedua tabel tersebut
+  
+Berikut ini class entity Prodi yang merepresentasikan tabel mahasiswa di database.  
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "prodi")
+public class Prodi {
+    
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(name = "name")
+    private String name;
+
+    @OneToOne
+    /**
+     * name, ini reference ke kolom mahasiswa_id di tabel prodi
+     * dan referenceJoinColumn reference ke kolom id pada mahasiswa
+     * */
+    @JoinColumn(name = "mahasiswa_id", referencedColumnName = "id")
+    private Mahasiswa mahasiswa;
+}
+```
+#### 
+KET :  
+*Sebelumnya utnuk membuat mekanisme JoinColumn nya kita menggunakan
+@PrimaryKeyJoinColumn, namun kali ini kita menggunakan annotation [@JoinColumn](https://jakarta.ee/specifications/persistence/3.0/apidocs/jakarta.persistence/jakarta/persistence/joincolumn)
+karena kita menyimpan id mahasiswa pada tabel prodi di kolom mahasiswa_id
+Dan kita gunakan kolom tersebut untuk join colum nya*
+
+*jika kita menggunakan @PrimaryKeyJoinColumn itu artinya kita menggunakan primary key
+di kedua tabel sebgai join coluimn nya*
+
+# OneToMany & ManyToOne
+OneToMany adalah relasi 1 data pada tabel memiliki banyak data pada tabel lainya, begitu juga sebaliknya ManyToOne adalah relasi banyak data pada tabel berrelasi hanya 1 data pada tabel lain.  
+  
+Untuk membuat relasi tersebu di JPA cukuplah mudah, kita hanya perlu menggunakan annotation pada tabel reference nya [@OneToMany](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/onetomany) dan [@ManyToOne](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/manytoone) pada tabel yang menyimpan foreign key nya, dan untuk join column nya kita bisa menggunakan annotation @JoinColumn.  
+  
+#### Example
+Misalnya disini kita memiliki tabel brands, yang berelasi OneToMany ke tabel product
+``` sql
+CREATE TABLE brands(
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100),
+    description TEXT,
+    PRIMARY KEY(id)
+) ENGINE InnoDB;
+```
+Berikut ini dalah tabel product, yang memiliki relasi ManyToOne ke tabel brands
+``` sql
+CREATE TABLE products(
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(100),
+    brand_id INT,
+    price INT DEFAULT 0,
+    description TEXT,
+    PRIMARY KEY(id),
+    FOREIGN KEY fk_products_x_brands (brand_id) REFERENCES brands(id)
+)ENGINE InnoDB;
+```
+Dan berikut ini adah class yang merepresentasikan tabel products 
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "products")
+public class Product {
+    
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    private String name;
+
+    private Long price;
+
+    private String description;
+
+    @ManyToOne
+    @JoinColumn(name = "brand_id", referencedColumnName = "id")
+    private Brand brand;
+}
+```
+#### KET :  
+kita definisikan joincolumn nya pada class entity Product karena di kelas ini lah yang mnyimpan id unique(brand_id/FOREIGN KEY) dari tabel brands  
+  
+Pada class entity yang mrepresentasikan tabel brands kita cukup memberikan annotation @OneToMany dan diisi dengan mappedBy = [atribut yang memiliki mekasnisme join column nya]
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import java.util.List;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "brands")
+public class Brand {
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    private String name;
+    
+    private String description;
+
+    @OneToMany(mappedBy = "brand")
+    private List<Product> product;
+}
+```
+#### KET :  
+Pada class entity yang merepresentasikan tabel brands, kita menggunakan annotation @OneToMany dan diikuti dengan mappedby = brand, karena atribut brand di entity class Product yang menyimpan mekanisme joinColumn nya.  
+

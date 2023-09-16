@@ -21,6 +21,8 @@
         <class>com.orm.jpaibbernate.jpahibbernate.entities.Departement</class>
         <class>com.orm.jpaibbernate.jpahibbernate.entities.User</class>
         <class>com.orm.jpaibbernate.jpahibbernate.entities.Ewallet</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Mahasiswa</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Prodi</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"></property>

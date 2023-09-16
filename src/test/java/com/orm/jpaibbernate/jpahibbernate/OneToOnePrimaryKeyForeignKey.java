@@ -7,11 +7,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.orm.jpaibbernate.jpahibbernate.entities.Address;
+import com.orm.jpaibbernate.jpahibbernate.entities.Mahasiswa;
+import com.orm.jpaibbernate.jpahibbernate.entities.Prodi;
 import com.orm.jpaibbernate.jpahibbernate.entities.Seller;
 import com.orm.jpaibbernate.jpahibbernate.entities.Store;
 import com.orm.jpaibbernate.jpahibbernate.entities.embededs.Contact;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
@@ -109,5 +110,33 @@ public class OneToOnePrimaryKeyForeignKey {
         Assertions.assertNotNull(seller.getStore());
         Assertions.assertNotNull(seller.getStore().getAddress());
         transaction.commit();
+    }
+
+    @Test
+    public void testForeignKeyJoinColumn() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Mahasiswa mahasiswa = new Mahasiswa();
+        mahasiswa.setName("Abdillah Alli");
+        mahasiswa.setEmail("allianoanymous@gmail.com");
+        entityManager.persist(mahasiswa);
+
+        Prodi prodi = new Prodi();
+        prodi.setName("Teknik Informatika");
+        prodi.setMahasiswa(mahasiswa);
+        entityManager.persist(prodi);
+        transaction.commit();
+    }
+
+    @Test
+    public void testFindForeignKeyJoinColumn() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        Mahasiswa mahasiswa = entityManager.find(Mahasiswa.class, 3);
+
+        Assertions.assertNotNull(mahasiswa);
+        Assertions.assertNotNull(mahasiswa.getProdi());
+        Assertions.assertEquals("Abdillah Alli", mahasiswa.getName());
+        Assertions.assertEquals("Teknik Informatika", mahasiswa.getProdi().getName());
     }
 }

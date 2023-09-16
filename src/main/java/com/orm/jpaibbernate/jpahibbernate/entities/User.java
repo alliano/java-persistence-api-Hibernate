@@ -42,7 +42,7 @@ public class User implements CreateAndUpdateAware {
     private Genre genre;
 
     @Column(name = "created_at")
-private LocalDateTime createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
