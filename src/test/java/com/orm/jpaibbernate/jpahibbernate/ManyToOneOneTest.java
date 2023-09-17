@@ -3,11 +3,9 @@ package com.orm.jpaibbernate.jpahibbernate;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import com.orm.jpaibbernate.jpahibbernate.entities.Brand;
 import com.orm.jpaibbernate.jpahibbernate.entities.Product;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;

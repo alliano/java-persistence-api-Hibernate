@@ -1972,11 +1972,11 @@ CREATE TABLE addresses(
     street VARCHAR(100),
     province VARCHAR(100), 
     city VARCHAR(100),
-    seller_id VARCHAR(100),
     PRIMARY KEY (id),
     FOREIGN KEY fk_addresses_x_stores (id) REFERENCES stores (id)
 ) ENGINE InnoDB;
 ```
+![oneToOnePrimaryKey](target/classes/images/oneToOnePrimaryKey.png)
 Tabel addresses tersebut memiliki reasi One To One ke tabel stores, yang artinya 1 data pada tabel stores hanya boleh memiliki 1 data pada tabel addresses.  
   
 Setelah kita membuat tabel stores dan addresses yang berelasi OneToOne, langkah selanjutnya kita buatkan Entity class untk merepresentasikan kedua tabel tersebut beserta relasinya.  
@@ -2102,7 +2102,8 @@ Selain menggunakan primary key relasi oneToOne, kita juga bisa melakukan dengan 
 Caranya cukuplah mudah, kita hanya perlu menambahkan kolom unique pada tabel reference nya.  
 Oke agar lebih mudah dipahami mari kita langusng di kasus nyata.  
   
-Misalnyakan disini kita memiliki tabel mahasiswa
+Misalnyakan disini kita memiliki tabel mahasiswa yang berelasi oneToOne ke tabel prodi
+![oneToOne](/target/classes/images/OneToOne.png)
 ``` sql
 CREATE TABLE mahasiswa(
     id INT NOT NULL AUTO_INCREMENT,
@@ -2177,6 +2178,7 @@ Untuk membuat relasi tersebu di JPA cukuplah mudah, kita hanya perlu menggunakan
   
 #### Example
 Misalnya disini kita memiliki tabel brands, yang berelasi OneToMany ke tabel product
+![oneToMany](target/classes/images/oneToMany.png)
 ``` sql
 CREATE TABLE brands(
     id INT NOT NULL AUTO_INCREMENT,
@@ -2231,9 +2233,9 @@ public class Product {
 }
 ```
 #### KET :  
-kita definisikan joincolumn nya pada class entity Product karena di kelas ini lah yang mnyimpan id unique(brand_id/FOREIGN KEY) dari tabel brands  
+*kita definisikan joincolumn nya pada class entity Product karena di kelas ini lah yang mnyimpan id unique(brand_id/FOREIGN KEY) dari tabel brands*  
   
-Pada class entity yang mrepresentasikan tabel brands kita cukup memberikan annotation @OneToMany dan diisi dengan mappedBy = [atribut yang memiliki mekasnisme join column nya]
+*Pada class entity yang mrepresentasikan tabel brands kita cukup memberikan annotation @OneToMany dan diisi dengan mappedBy = [atribut yang memiliki mekasnisme join column nya]*
 ``` java
 package com.orm.jpaibbernate.jpahibbernate.entities;
 
@@ -2264,6 +2266,174 @@ public class Brand {
     private List<Product> product;
 }
 ```
-#### KET :  
-Pada class entity yang merepresentasikan tabel brands, kita menggunakan annotation @OneToMany dan diikuti dengan mappedby = brand, karena atribut brand di entity class Product yang menyimpan mekanisme joinColumn nya.  
 
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Brand;
+import com.orm.jpaibbernate.jpahibbernate.entities.Product;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+
+public class ManyToOneOneTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testInsert() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+
+        transaction.begin();
+
+        Brand brand = new Brand();
+        brand.setName("POCO");
+        entityManager.persist(brand);
+
+        Product product1 = new Product();
+        product1.setName("POCO X3 NFC");
+        product1.setPrice(3_000_000L);
+        product1.setBrand(brand);
+        entityManager.persist(product1);
+
+        Product product2 = new Product();
+        product2.setName("POCO F5");
+        product2.setPrice(4_000_000L);
+        product2.setBrand(brand);
+        entityManager.persist(product2);
+
+        transaction.commit();
+    }
+
+    @Test
+    public void testFind() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        Product product = entityManager.find(Product.class, 1);
+        Assertions.assertNotNull(product);
+        Assertions.assertNotNull(product.getBrand());
+        Assertions.assertEquals("POCO", product.getBrand().getName());
+    }
+}
+```
+#### KET :  
+*Pada class entity yang merepresentasikan tabel brands, kita menggunakan annotation @OneToMany dan diikuti dengan mappedby = brand, karena atribut brand di entity class Product yang menyimpan mekanisme joinColumn nya.*
+
+# ManyToMany
+ManyToMany adalah relasi banyak data pada tabel memiliki banyak relasi di tabel lainya, dan untuk membuat relasi tersebut kita membutuhkan junction tabel atau tabel penghubung antara tabel pertama dengan tabel ke dua.  
+  
+Kita dapat membuat relasi ManyToMany dengan mudah menggunakan bantuan JPA. Untuk membuat relasi ManyToMany di JPA, kita bisa menggunakan annotation [@ManyToMany](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/manytomany) dan untuk membuat mekanisme join nya menggunakan annotation [@JoinTable](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/jointable) bukan [@Joinolumn](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/joincolumn) lagi seperti di relasi-relasi yang telah kita bahas.  
+
+#### contoh : 
+Misalnya disini kita memiliki tabel Mahasiswa yang berelasi ManyToMany ke tabel mata kuliah, artinya banyak data pada tabel mahasiswa memiliki banyak relasi ke tabel mata kuliah.  
+![manyToMany](target/classes/images/manytomany.png)  
+Kita telah membuat tabel mahasiswa sebelumnya sekarang kita hanya butuh membuat junction table(tabel penghubung antara tabel mahasiswa dan tabel matakuliah) dan tabel mata_kuliah  
+``` sql
+CREATE TABLE matakuliah(
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(50),
+    PRIMARY KEY(id)
+) ENGINE InnoDB;
+```
+
+``` sql
+CREATE TABLE mahasiswa_matakuliah(
+    mahasiswa_id INT NOT NULL,
+    matakuliah_id INT NOT NULL,
+    FOREIGN KEY fk_mahasiswa_X_mahasiswa_id (mahasiswa_id) REFERENCES mahasiswa(id),
+    FOREIGN KEY fk_matakuliah_X_matakuliah_id (matakuliah_id) REFERENCES matakuliah (id)
+) ENGINE InnoDB;
+```  
+Setelah itu mari kita tabahkan attribut mata kuliah pada class entity mahasiswa
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import java.util.List;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Setter @Getter
+@AllArgsConstructor @NoArgsConstructor 
+@Entity @Table(name = "mahasiswa")
+public class Mahasiswa {
+    
+    @Id @GeneratedValue(strategy =  GenerationType.IDENTITY)
+    private Integer id;
+
+    private String name;
+
+    private String email;
+
+    @OneToOne(mappedBy = "mahasiswa")
+    private Prodi prodi;
+
+    @ManyToMany(mappedBy = "mahasiswa")
+    private List<MataKuliah> mataKuliah;
+}
+```
+#### Ket :  
+*Pada atribut mahasiswa, kita menggunakan tipe data collection dan kita beritau atribut mana yang menyimpan  mekanisme join column nya dengan menggunakan mappedBy*
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import java.util.List;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "matakuliah")
+public class MataKuliah {
+    
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    @ManyToMany
+    /**
+     * name, ini reference ke nama junction tabel yang kita telah buat sebelumnya
+     * joinColumn, untuk membuat mekanisme joincolum tabel matakuliah ke tabel mahasiswa_matakuliah
+     * inverseJoinColumn, untuk mekanisme joinColum di tabel reference nya(tabel mahasiswa ke tabel mahasiswa_matakuliah)
+     * */
+    @JoinTable(
+        name = "mahasiswa_matakuliah",
+        joinColumns = @JoinColumn(name = "matakuliah_id", referencedColumnName = "id"),
+        inverseJoinColumns = @JoinColumn(name = "mahasiswa_id", referencedColumnName = "id")
+        )
+    private List<Mahasiswa> mahasiswa;
+}
+```
+#### Ket :  
+*Untuk mekanisme Join nya, kita bebas definisikan di class entity yang mana, entah itu di class entity Mahasiswa atau Matakuliah*
+
+# 
