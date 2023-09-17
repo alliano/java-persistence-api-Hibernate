@@ -1976,7 +1976,7 @@ CREATE TABLE addresses(
     FOREIGN KEY fk_addresses_x_stores (id) REFERENCES stores (id)
 ) ENGINE InnoDB;
 ```
-![oneToOnePrimaryKey](target/classes/images/oneToOnePrimaryKey.png)
+![oneToOnePrimaryKey](src/main/resources/images/oneToOnePrimaryKey.png)
 Tabel addresses tersebut memiliki reasi One To One ke tabel stores, yang artinya 1 data pada tabel stores hanya boleh memiliki 1 data pada tabel addresses.  
   
 Setelah kita membuat tabel stores dan addresses yang berelasi OneToOne, langkah selanjutnya kita buatkan Entity class untk merepresentasikan kedua tabel tersebut beserta relasinya.  
@@ -2103,7 +2103,7 @@ Caranya cukuplah mudah, kita hanya perlu menambahkan kolom unique pada tabel ref
 Oke agar lebih mudah dipahami mari kita langusng di kasus nyata.  
   
 Misalnyakan disini kita memiliki tabel mahasiswa yang berelasi oneToOne ke tabel prodi
-![oneToOne](/target/classes/images/OneToOne.png)
+![oneToOne](src/main/resources/images/oneToOnePrimaryKey.png)
 ``` sql
 CREATE TABLE mahasiswa(
     id INT NOT NULL AUTO_INCREMENT,
@@ -2178,7 +2178,7 @@ Untuk membuat relasi tersebu di JPA cukuplah mudah, kita hanya perlu menggunakan
   
 #### Example
 Misalnya disini kita memiliki tabel brands, yang berelasi OneToMany ke tabel product
-![oneToMany](target/classes/images/oneToMany.png)
+![oneToMany](src/main/resources/images/oneToMany.png)
 ``` sql
 CREATE TABLE brands(
     id INT NOT NULL AUTO_INCREMENT,
@@ -2335,7 +2335,7 @@ Kita dapat membuat relasi ManyToMany dengan mudah menggunakan bantuan JPA. Untuk
 
 #### contoh : 
 Misalnya disini kita memiliki tabel Mahasiswa yang berelasi ManyToMany ke tabel mata kuliah, artinya banyak data pada tabel mahasiswa memiliki banyak relasi ke tabel mata kuliah.  
-![manyToMany](target/classes/images/manytomany.png)  
+![manyToMany](src/main/resources/images/manytomany.png)  
 Kita telah membuat tabel mahasiswa sebelumnya sekarang kita hanya butuh membuat junction table(tabel penghubung antara tabel mahasiswa dan tabel matakuliah) dan tabel mata_kuliah  
 ``` sql
 CREATE TABLE matakuliah(
