@@ -2534,4 +2534,110 @@ Terdapat 3 cara untuk membuat IS-A relation :
 ### SINGLE_TABLE 
 Salahsatu cara untuk mengimplementasikan IS-A relation yaitu menggunakan cara single table inheritance, artinya semua kolom yang mewakili dari masing-masing entity child digambungkan menjadi 1 pada di tabel parent nya.  
 
-Kelebihan menggunakan cara ini performa query yang cepat namun kekuranganya tiap kolom yang mewakili child entity harus nullable, karena tiap baris pada tabel hanya memiliki 1 entity.
+Kelebihan menggunakan cara ini performa query yang cepat namun kekuranganya tiap kolom yang mewakili child entity harus nullable, karena tiap baris pada tabel hanya memiliki 1 entity.  
+  
+Okay, misalnya disini kita memiliki kasus yang mana kita akan menyimpan data student namun student ini memiliki 2 jenis :
+ * Tranfer Student
+ * International Student
+
+Untuk menyelesaikan kasus tersebut kita bisa menggunakan IS-A relation dengan SINGLE_TABLE.  
+okay, hal pertama yang harus kita lakukan yaitu membuat entity parent nya yaitu, tabel Student.  
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@DiscriminatorColumn(name = "type_of_student")
+@DiscriminatorValue(value = "STUDENT")
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "students")
+public class Student {
+    
+    @Id
+    private String id;
+
+    private String name;
+
+    private String npm;
+}
+```
+#### Ket :
+*Pada parent entity nya kita wajib memberikan annotation [@Inheritance](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/inheritance) untuk menentukan strategi apa yang akan digunakan*  
+*Sebelumnya kita telah mengetahui bahwa relastion IS-A dnegan SINGLE_TABLE, itu artinya kita akan menggunakan 1 tabel untuk menyimpan data dari beberpa entity.*
+*Nah untuk membedakan data pada tabel tersebut milik entity yang mana, kita harus menambahkan 1 kolom yang berfungsi sebagai pembeda tiap-tiap entity*  
+*Secara default parent entity tidak mengetahui kolom yang mana yang digunakan sebagai pembeda, untuk memberi taunya kita dapat menggunakan annotation [@DiscriminatorColumn(name = "nama_kolom_pada_tabel")](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/discriminatorcolumn) dan untuk mengisi value pada kolom pembeda nya kita bisa menggunakan [@DiscriminatorValue(value = "nilai_yang_digunakan_sebagai_pembeda")](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/discriminatorvalue) (biasanya nama dari entity)*
+  
+    
+Dan pada child entity nya(InternationalStudent, TranferStudent) perlu meng extend class parent nya(Student) dan kita tidak perlu menambahkan annotation [@Table](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/table).  
+Untuk child entity ntya kita hanya menambahkan annotation [@DiscriminatorValue(value = "nilai_yang_digunakan_sebagai_pembeda")](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/discriminatorvalue)  
+  
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@DiscriminatorValue(value = "INTERNATIONAL_STUDENT")
+@Entity @NoArgsConstructor @Setter @Getter
+public class InternationalStudent extends Student {
+    
+    @Column(name = "from_country")
+    private String fromCountry;
+
+    private String visa;
+}
+```
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import java.util.Date;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Setter @Getter
+@DiscriminatorValue(value = "TRANFER_STUDENT")
+@Entity @NoArgsConstructor 
+public class TranferStudent extends Student {
+    
+    @Column(name = "from_university")
+    private String fromUniversity;
+
+    @Column(name = "moving_date")
+    private Date movingDate;
+    
+}
+```
+Dan berikut ini adalah tabel student nya yang memuat entitty InternationalStudent dan TranferStudent
+``` sql
+CREATE TABLE students(
+    id VARCHAR(10) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    npm VARCHAR(7) NOT NULL,
+    ipk DOUBLE NOT NULL,
+    type_of_student VARCHAR(50),
+    from_university VARCHAR(100),
+    moving_date DATE,
+    from_country VARCHAR(100),
+    visa VARCHAR(12)
+) ENGINE InnoDB;
+```

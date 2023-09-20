@@ -2,12 +2,10 @@ package com.orm.jpaibbernate.jpahibbernate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import com.orm.jpaibbernate.jpahibbernate.entities.Employee;
 import com.orm.jpaibbernate.jpahibbernate.entities.Manager;
 import com.orm.jpaibbernate.jpahibbernate.entities.VicePresident;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
