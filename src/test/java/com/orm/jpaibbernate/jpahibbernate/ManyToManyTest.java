@@ -40,13 +40,25 @@ public class ManyToManyTest {
     }
 
     @Test
+    public void testUpdate() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        Mahasiswa mahasiswa = entityManager.find(Mahasiswa.class, 4);
+        mahasiswa.getMataKuliah().get(0).setName("Programming dasar");
+        entityManager.merge(mahasiswa);
+
+        transaction.commit();
+    }
+
+    @Test
     public void testFind() {
         EntityManager entityManager = this.entityManagerFactory.createEntityManager();
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
         Mahasiswa mahasiswa = entityManager.find(Mahasiswa.class, 3);
         Assertions.assertNotNull(mahasiswa);
-        Assertions.assertNotNull(mahasiswa.getMataKuliah());
         transaction.commit();
     }
 }

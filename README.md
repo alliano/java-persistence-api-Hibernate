@@ -2436,4 +2436,104 @@ public class MataKuliah {
 #### Ket :  
 *Untuk mekanisme Join nya, kita bebas definisikan di class entity yang mana, entah itu di class entity Mahasiswa atau Matakuliah*
 
-# 
+# FetchType
+Ketika kita menggunakan annotation relation, seperti :
+ * @OneToOne
+ * @OneToMany
+ * @ManyToOne
+ * @ManyToMany
+
+Semua annotation tersebut memiliki strategy untuk melakukan join pada tabel reference nya, ada 2 strategy yang dapat digunakan :  
+ * LAZY, Tabel reference nya tiak ikut di query
+ * EAGER, Tabel reference nya ikut di query
+  
+Masing-masing annotation relation tersebut memiliki strategy defaut saat kita tidak definisikan strategy nya.  
+|   Anotation relation  |  Default strategy
+|-----------------------|----------------------
+| @OneToOne             | EAGER
+| @OneToMany            | LAZY
+| @ManyToOne            | EAGER
+| @ManyToMany           | LAZY
+
+Jika kita ingin mendefinisikan strategy yang kita ingin gunakan, maka kita dapat memanggil attribut [fetch](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/fetchtype) milik annotation relation dan kita berikan value nya dengan strategy yang kita inginkan.  
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import java.util.List;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Setter @Getter
+@AllArgsConstructor @NoArgsConstructor 
+@Entity @Table(name = "mahasiswa")
+public class Mahasiswa {
+    
+    @Id @GeneratedValue(strategy =  GenerationType.IDENTITY)
+    private Integer id;
+
+    private String name;
+
+    private String email;
+    /**
+     * Defaut strategy fetch pada annotation @OneToOne adalah EAGER
+     * artinya jikalau ada query data mahasiswa maka data pada tabel 
+     * refrence nya akan ikut di query menggunakan JOIN,
+     * Jikalau kita mengubah strategy nya menjadi LAZY maka data pada tabel
+     * refrence nya tidak ikut di query. 
+     * 
+     * Namun saat data pada tabel reference nya di butuhkan maka
+     * Jpa akan melakukan query lagi secara terpisah(tidak menggunakan JOIN)
+     */
+    @OneToOne(mappedBy = "mahasiswa", fetch = FetchType.LAZY)
+    private Prodi prodi;
+
+    /**
+     * Default strategy fetch pada annotation @ManyToMany adalah LAZY.  
+     * Saat kita mengubah strategy pengambilan data pada tabel reference nya
+     * pada annotation @ManyToMany menjadi EAGER, maka saat terjadi proses
+     * query data yang ada pada kolom refrence nya akan ikut di query
+     * menggunakan JOIN
+     */
+    @ManyToMany(mappedBy = "mahasiswa", fetch = FetchType.EAGER)
+    private List<MataKuliah> mataKuliah;
+}
+```
+
+# IS-A Relationship
+Kita telah mengetahui bahwa terdapat 4 tipe relationship pada database :
+ * OneToOne
+ * OneToMany
+ * ManyToOne
+ * ManyToMany
+
+Namun sebenarnya masih ada 1 tipe raltionship pada database, yaitu IS-A relationship.  
+relation IS-A adalah relasi yang berbentuk Hirarki mirip seperti Inheritance pada konsep OOP.  
+Berikut ini merupakan contoh diagram IS-A relationship  
+
+![IS-A](/target/classes/images/IS-A.png)  
+  
+#### Ket :  
+Entity Mahasiswa merupakan Entity Parent nya, dan Entity Mahaiswa Reguler, Mahasiswa Pindahan, dan Mahasiswa Internasional adalah child Entity dari Entity Mahasiswa.   
+Konsep tersebut terlihat sangat sama dengan konsep Inheritance pada konsep OOP.  
+  
+Terdapat 3 cara untuk membuat IS-A relation : 
+ * SINGLE_TABLE
+ * JOINED_TABLE
+ * TABLE_PER_CLASS_INHERITANCE
+
+### SINGLE_TABLE 
+Salahsatu cara untuk mengimplementasikan IS-A relation yaitu menggunakan cara single table inheritance, artinya semua semua kolom yang mewakili dari masing-masing entity child digambungkan mennjadi 1 tabel.  
+
+
+
+Kelebihan menggunakan cara ini performa query yang cepat namun kekuranganya tiap kolom yang mewakili child entity harus nullable, karena tiap baris pada tabel hanya memiliki 1 entity.
