@@ -2532,8 +2532,6 @@ Terdapat 3 cara untuk membuat IS-A relation :
  * TABLE_PER_CLASS_INHERITANCE
 
 ### SINGLE_TABLE 
-Salahsatu cara untuk mengimplementasikan IS-A relation yaitu menggunakan cara single table inheritance, artinya semua semua kolom yang mewakili dari masing-masing entity child digambungkan mennjadi 1 tabel.  
-
-
+Salahsatu cara untuk mengimplementasikan IS-A relation yaitu menggunakan cara single table inheritance, artinya semua kolom yang mewakili dari masing-masing entity child digambungkan menjadi 1 pada di tabel parent nya.  
 
 Kelebihan menggunakan cara ini performa query yang cepat namun kekuranganya tiap kolom yang mewakili child entity harus nullable, karena tiap baris pada tabel hanya memiliki 1 entity.
