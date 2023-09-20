@@ -2520,7 +2520,7 @@ Namun sebenarnya masih ada 1 tipe raltionship pada database, yaitu IS-A relation
 relation IS-A adalah relasi yang berbentuk Hirarki mirip seperti Inheritance pada konsep OOP.  
 Berikut ini merupakan contoh diagram IS-A relationship  
 
-![IS-A](/target/classes/images/IS-A.png)  
+![IS-A](/src/resources/images/IS-A.png)  
   
 #### Ket :  
 Entity Mahasiswa merupakan Entity Parent nya, dan Entity Mahaiswa Reguler, Mahasiswa Pindahan, dan Mahasiswa Internasional adalah child Entity dari Entity Mahasiswa.   
