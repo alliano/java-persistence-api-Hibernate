@@ -2693,3 +2693,163 @@ public class IS_A_SingleTableTest {
     }
 }
 ```
+## JOINED
+Cara yang kedua untuk mengimpelementasi IS-A relationship yaitu menggunakan JOINED.  
+Saat kita menggunakan JOINED untuk mengimplementasikan IS-A relation maka kita harus memisahkan tabel parent dan tabel child nya; Dan kita tidak perlu lagi menggunnakan annotation @DiscriminatorColumn dan @DiscriminatorValue, kita hanya menggunakan annotation @Inheritance(strategy = [InheritanceType.JOINED](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/inheritancetype#JOINED)).  
+  
+Pada class entity child nya kita hanya perlu meng extend ke parent Entity nya saja.  
+Okay, misalnya saja kita memiliki kasus yang mana kita akan menyimpan data payment, namun data payment ini memiliki 2 jenis :
+ * Payment bank jago
+ * Payment bank Permata
+
+Okay, untuk mengimplementasikan nya menggunakan IS-A relation dan menggunakan strategy JOINED langkah pertama kita harus membuat entity parent nya yaitu entity Payment.  
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Setter @Getter @NoArgsConstructor
+@Inheritance(strategy = InheritanceType.JOINED)
+@Entity @Table(name = "payment")
+public class Payment {
+    
+    @Id
+    private String id;
+
+    private Long amount;
+}
+```
+Dan pada entity child nya(PaymentBankJago dan PaymentBankPermata) kita hanya perlu meng extend class Payment
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Setter @Getter @NoArgsConstructor
+@Entity @Table(name = "payment_bank_jago")
+public class PaymentBankJago extends Payment {
+    
+    @Column(name = "card_number")
+    private String cardNumber;
+}
+```
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Setter @Getter @NoArgsConstructor
+@Entity @Table(name = "payment_bank_permata")
+public class PaymentBankPermata extends Payment {
+    
+    @Column(name = "card_number")
+    private String cardNumber;
+}
+```
+Dan berikuit ini merupakan tabel payment, payment_bank_jago, payment_bank_permata
+``` sql
+CREATE TABLE payment(
+    id VARCHAR(5) NOT NULL,
+    amount BIGINT NOT NULL,
+    PRIMARY KEY(id)
+) ENGINE InnoDB;
+
+CREATE TABLE payment_bank_jago(
+    id VARCHAR(5) NOT NULL,
+    card_number VARCHAR(17),
+    PRIMARY KEY(id),
+    FOREIGN KEY fk_paymentbankjago_x_payment (id) REFERENCES payment(id)
+) ENGINE InnoDB;
+
+CREATE TABLE payment_bank_permata(
+    id VARCHAR(5) NOT NULL,
+    card_number VARCHAR(17),
+    PRIMARY KEY(id),
+    FOREIGN KEY fk_paymentbankpermata_x_payment (id) REFERENCES payment(id)
+)ENGINE InnoDB;
+```
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.orm.jpaibbernate.jpahibbernate.entities.PaymentBankJago;
+import com.orm.jpaibbernate.jpahibbernate.entities.PaymentBankPermata;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+
+public class JoinedTableInheritanceTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testInsert() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        PaymentBankJago paymentBankJago = new PaymentBankJago();
+        paymentBankJago.setId("JGO01");
+        paymentBankJago.setAmount(100_000_000_00L);
+        paymentBankJago.setCardNumber("0232847592342453");
+        entityManager.persist(paymentBankJago);
+
+        PaymentBankPermata paymentBankPermata = new PaymentBankPermata();
+        paymentBankPermata.setId("PRM01");
+        paymentBankPermata.setAmount(30_000_000_00L);
+        paymentBankPermata.setCardNumber("000229345234562");
+        entityManager.persist(paymentBankPermata);
+
+        transaction.commit();
+    }
+
+    @Test
+    public void testFind() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        PaymentBankJago bankJago = entityManager.find(PaymentBankJago.class, "JGO01");
+        Assertions.assertNotNull(bankJago);
+
+        PaymentBankPermata bankPermata = entityManager.find(PaymentBankPermata.class, "PRM01");
+        Assertions.assertNotNull(bankPermata);
+
+        transaction.commit();
+    }
+}
+```
+#### *KET :*  
+*Saat kita menggunakan strategy JOINED, pada saat query berdasarkan entity child nya; yang dilakukan oleh JPA yaitu meng select entity parent nya setelah itu meng select entity child nya. Namun jikalau kita melakukan find berdasarkan entity Parent nya maka JPA akan melakukan join keseluruh tabel child nya, hal ini kurang baik dilakukan karena akan memakan letancy yang cukup besar*
+  
+*Jikalau kasusnya itu setiap melakukan query, semua tabel parent dan child nya di tampilkan, alagkah baiknya menggunakan strategy [SINGLE_TABLE](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/inheritancetype#SINGLE_TABLE)*
+
+
