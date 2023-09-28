@@ -3033,7 +3033,7 @@ public void testFind() {
 ```
 *KET :*
 *Jangan pernah melakukan find berdasarkan entity parent jikalau menggunakan strategy TABEL_PER_CLASS, karena JPA akan melakukan SELCT FROM (SELECT ) dan UNION, hal tersebut akan sangat lambant dan memakan banyak letancy jikalau child entity nya banyak*
-![findParent](/target/classes/images/selectByParent.png)
+![findParent](src/main/resources/images/selectByParent.png)
 
 *Keuntungan dari Strategy TABLE_PER_CLASS, yaitu saat kita find berdasarkan entity child nya JPA tidak akan melakukan JOIN terhadap tabel parent nya, berbeda halnya jikalau menggunakan JOINED strategy. Pada JOINED strategy saaat kita melakukan query kepada child entity maka parent entity akan di join.*  
 
@@ -3046,7 +3046,4 @@ public void findByChildEntity() {
     Assertions.assertNotNull(transactionCredit);
 }
 ```
-![find by child](/target/classes/images/findByChild.png)  
-
-  
-
+![find by child](src/main/resources/images/findByChild.png)  
