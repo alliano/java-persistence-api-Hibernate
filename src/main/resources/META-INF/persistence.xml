@@ -26,6 +26,9 @@
         <class>com.orm.jpaibbernate.jpahibbernate.entities.Employee</class>
         <class>com.orm.jpaibbernate.jpahibbernate.entities.VicePrecident</class>
         <class>com.orm.jpaibbernate.jpahibbernate.entities.Manager</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.Payment</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.PaymentBankJago</class>
+        <class>com.orm.jpaibbernate.jpahibbernate.entities.PaymentBankPermata</class>
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"></property>
