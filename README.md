@@ -2852,4 +2852,201 @@ public class JoinedTableInheritanceTest {
   
 *Jikalau kasusnya itu setiap melakukan query, semua tabel parent dan child nya di tampilkan, alagkah baiknya menggunakan strategy [SINGLE_TABLE](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/inheritancetype#SINGLE_TABLE)*
 
+# TABLE_PER_CLASS
+Strategy yang terakhir untuk mengimplementasikan IS-A relationsip adalah TABLE_PER_CLASS.  
+TABLE_PER_CLASS inheritance ini artinya, Tabel parent dan tabel child nya semua terpisah dan tidak ada relasi di tabel nya.  
+  
+Strategy ini mirip seperti JOINED strategy, perbedaan strategy ini ada pada relasi yang dimiliki oleh JOINED.  
+Pada Strategy JOINED, pada tabel child nya menyimpan FOREIGN KEY relasi one to one ke tabel parent nya, namun pada TABLE_PER_CLASS strategy tidak ada FOREIGEN key nya sama sekali.  
+  
+Untuk menggunakan Strategy ini cukuplah mudah, dan caranya cukup mirip seperti kita menggunakan strategy JOINED.  
+Kita cukup menambahkan annotation @Inheritance(strategy = [InheritanceType.TABLE_PER_CLASS](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/inheritancetype#TABLE_PER_CLASS)) Pada Parent Entity nya, dan pada child entity hanya perlu meng extend parent class.  
+  
+Okay, misalnya kita akan menyimpan data transaction dan data transaction tersebut ada 2 tipe:  
+ * TransactionCredit
+ * TransactionDebit
+
+Hal pertama yang harus kita lakukan yaitu, kita buatkan class entity parent nya terlebih dahulu
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "transaction")
+public class Transaction {
+
+    @Id
+    private String id;
+
+    private Long belance;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+}
+```
+Setelah kita membuat parent entity nya, pada entity class child(TransactionDebit dan TransactionCredit) hanya perlu meng extend entity Transaction.  
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "transaction_debit")
+public class TransactionDebit extends Transaction {
+    
+    @Column(name = "amount")
+    private Long debitAmount;
+}
+```
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "transaction_credit")
+public class TransactionCredit extends Transaction {
+    
+    @Column(name = "amount")
+    private Long creditAmount;
+}
+```
+Setelah itu mari kita buatkan tabel untk merepresentasikan ketiga Entity diatas(Transaction, TransactionCredit, TransactionDebit).  
+``` sql
+CREATE TABLE transaction(
+    id VARCHAR(10) NOT NULL,
+    belance BIGINT,
+    created_at TIMESTAMP,
+    PRIMARY KEY(id)
+) ENGINE InnoDB;
+
+CREATE TABLE transaction_credit(
+    id VARCHAR(10) NOT NULL,
+    amount BIGINT NOT NULL,
+    belance BIGINT,
+    created_at TIMESTAMP,
+    PRIMARY KEY(id)
+) ENGINE InnoDB;
+
+CREATE TABLE transaction_debit(
+    id VARCHAR(10) NOT NULL,
+    amount BIGINT NOT NULL,
+    belance BIGINT,
+    created_at TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE InnoDB;
+```
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.time.LocalDateTime;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Transaction;
+import com.orm.jpaibbernate.jpahibbernate.entities.TransactionCredit;
+import com.orm.jpaibbernate.jpahibbernate.entities.TransactionDebit;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+
+public class TablePerClassInheritanceTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @AfterEach
+    public void tierDown() {
+        this.entityManagerFactory.close();
+    }
+
+    @Test
+    public void testInsert() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction entityTransaction = entityManager.getTransaction();
+        entityTransaction.begin();
+
+        Transaction transaction = new Transaction();
+        transaction.setId("TR01");
+        transaction.setBelance(10_000_000L);
+        transaction.setCreatedAt(LocalDateTime.now());
+        entityManager.persist(transaction);
+
+
+        TransactionDebit transactionDebit = new TransactionDebit();
+        transactionDebit.setId("TRD01");
+        transactionDebit.setDebitAmount(100_000_000L);
+        transactionDebit.setCreatedAt(LocalDateTime.now());
+        entityManager.persist(transactionDebit);
+
+        TransactionCredit transactionCredit = new TransactionCredit();
+        transactionCredit.setId("TRC01");
+        transactionCredit.setCreditAmount(100_000_000L);
+        transactionCredit.setCreatedAt(LocalDateTime.now());
+        entityManager.persist(transactionDebit);
+
+        entityTransaction.commit();
+    }
+}
+```
+``` java
+@Test
+public void testFind() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction entityTransaction = entityManager.getTransaction();
+    entityTransaction.begin();
+    // Jangan pernah melakuakn find berdasarkan parent entity seperti ini 
+    Transaction transaction = entityManager.find(Transaction.class, "TR01");
+    Assertions.assertNotNull(transaction);
+    entityTransaction.commit();
+}
+```
+*KET :*
+*Jangan pernah melakukan find berdasarkan entity parent jikalau menggunakan strategy TABEL_PER_CLASS, karena JPA akan melakukan SELCT FROM (SELECT ) dan UNION, hal tersebut akan sangat lambant dan memakan banyak letancy jikalau child entity nya banyak*
+![findParent](/target/classes/images/selectByParent.png)
+
+*Keuntungan dari Strategy TABLE_PER_CLASS, yaitu saat kita find berdasarkan entity child nya JPA tidak akan melakukan JOIN terhadap tabel parent nya, berbeda halnya jikalau menggunakan JOINED strategy. Pada JOINED strategy saaat kita melakukan query kepada child entity maka parent entity akan di join.*  
+
+*TABLE_PER_CLASS ini cenderung lebih cepat daripada dua strategy yang sebelumnya telah kita bahas, namun dengan catatan saat melakukan find nya harus berdasarkan entity child bukan entity parent*  
+``` java
+@Test
+public void findByChildEntity() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    TransactionCredit transactionCredit = entityManager.find(TransactionCredit.class, "TRC01");
+    Assertions.assertNotNull(transactionCredit);
+}
+```
+![find by child](/target/classes/images/findByChild.png)  
+
+  
 
