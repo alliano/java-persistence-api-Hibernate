@@ -3303,4 +3303,208 @@ public class OptimisticUpdateTest {
 ```
 
 ### Pesimistic Locking
-Pesimistic Locking adalah proses multiple transaction yang mana tiap-tiap transaction akan melakukan locking terhadap data, dengan begitu tiap-tiap transaksi haru mengantri hingga proses transaksi yang pertama melakukan commit
+Pesimistic Locking adalah proses multiple transaction yang mana tiap-tiap transaction akan melakukan locking terhadap data, dengan begitu tiap-tiap transaksi haru mengantri hingga proses transaksi yang pertama melakukan commit.  
+
+Ada itga jenis [Pesimistic Locking](https://jakarta.ee/specifications/webprofile/10/apidocs/jakarta/persistence/lockmodetype) yang dapat kita gunakan:
+|   Lock Mode                   |   deskripsi   
+|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------
+|   PESIMISTIC_LOCK_INCREMENT   | Entity akan di lock scara pesimistic, dan versi akan sinaikan walaupun data tidak di update
+|   PESIMISTIC_READ             | Entity akan di lock secara pesimistic menggunakan shared lock(Jikalau database yang digunakan mendukung query SELECT FOR SHARE)
+|   PESIMISTIC_WRITE            | Entity akan di lock secara explicit(menggunakan SELECT FOR UPDATE)
+
+Berikut ini merupakan contoh penggunaanya :
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.orm.jpaibbernate.jpahibbernate.entities.Mahasiswa;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.LockModeType;
+
+public class PesimisticLockingTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testPesimistic1() throws InterruptedException {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        /**
+         * pada saat melakukan find, kita tambahkan mode locking nya di paramterter ke 3
+         */
+        Mahasiswa mahasiswa = entityManager.find(Mahasiswa.class, "3", LockModeType.PESSIMISTIC_WRITE);
+        mahasiswa.setEmail("liano@gmail.com");
+        Thread.sleep(10 * 1000L);
+        entityManager.persist(mahasiswa);
+        transaction.commit();
+    }
+
+    @Test
+    public void testPesimistic2() throws InterruptedException {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        Mahasiswa mahasiswa = entityManager.find(Mahasiswa.class, "3", LockModeType.PESSIMISTIC_WRITE);
+        mahasiswa.setEmail("lian@gmail.com");
+        entityManager.persist(mahasiswa);
+        transaction.commit();
+    }
+}
+```
+
+# Managed Entity
+Saat kita membuat entity menggunakan keyword new/menginstansisasi enitty, entity tersebut merupakan Unmanaged entity; artinya
+entity tersebut tidak di manage oleh JPA.  
+Tapi saat kita menyimpan entity tersebut ke database menggunakan method persist, ataupun merge, maka entity tersebut
+menjadi managed entity.
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.time.LocalDateTime;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.orm.jpaibbernate.jpahibbernate.entities.Dosen;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+
+public class ManagedUnManagedEntityTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void test() {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        // ini merupakan Unmanaged Entity
+        Dosen dosen = new Dosen();
+        dosen.setId("D001");
+        dosen.setEmail("example@Gmail.com");
+        dosen.setCreatedAt(LocalDateTime.now());
+        dosen.setUpdatedAt(LocalDateTime.now());
+        /**
+         * Saat kita melakukan persis pada entity diatas
+         * maka entity diatas akan menjadi managed entity
+         * artinya enity diatas akan dimanage oleh JPA
+         *  */ 
+        entityManager.persist(dosen);
+
+        /**
+         * dan seandainya setelah melakukan persistterjadi perubahan,
+         * misalnya name di ubah dsb dan kita tidak melakukan
+         * merge atau persist, maka secara otomatis jpa akan melakukan update
+         */
+        dosen.setEmail("kisworo@gmail.com");
+        transaction.commit();
+    } 
+}
+```
+
+Begitu juga saat kita melakukan find data didalam database. Hasil kembalian atau data yang kita dapatkan 
+dari database hasil dari operasi find itu juga termasuk managed entity.  
+  
+Namun jikalau kita ingin menguabh managed entity menjadi Unmanaged entity, kita dapat melakukanya dengan 
+menggunakan method detech() milik EntityManager
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.time.LocalDateTime;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.orm.jpaibbernate.jpahibbernate.entities.Dosen;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+
+public class ManagedUnManagedEntityTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void test() {
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        // ini merupakan Unmanaged Entity
+        Dosen dosen = new Dosen();
+        dosen.setId("D001");
+        dosen.setEmail("example@Gmail.com");
+        dosen.setCreatedAt(LocalDateTime.now());
+        dosen.setUpdatedAt(LocalDateTime.now());
+        /**
+         * Saat kita melakukan persis pada entity diatas
+         * maka entity diatas akan menjadi managed entity
+         * artinya enity diatas akan dimanage oleh JPA
+         *  */ 
+        entityManager.persist(dosen);
+
+        /**
+         * dan seandainya setelah melakukan persistterjadi perubahan,
+         * misalnya name di ubah dsb dan kita tidak melakukan
+         * merge atau persist, maka secara otomatis jpa akan melakukan update
+         */
+        dosen.setEmail("kisworo@gmail.com");
+        transaction.commit();
+    }
+
+    @Test
+    public void find() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        // dosen merupakan managed entity
+        Dosen dosen = entityManager.find(Dosen.class, "D001");
+        /**
+         * entity dosen menajdi Unmanaged entity, dan jikala
+         * terjadi perubahan di bject entity dosen
+         * misalnya seperti nama email nya di ubah dsb
+         * maka JPA tidak akan melakukan update secara otomatis karena emg
+         * entity tersebut sudah tidak di manage oleh JPA.
+         * 
+         * namun jikalau kita melaukan persist kembali maka entity tersebut
+         * menjadi managed entity
+         *  */ 
+        entityManager.detach(dosen);
+
+        transaction.commit();
+    }
+}
+```
+
+Perlu diketahui bahwa managed entity hanya terjadi pada lingkup transaction, jikalau transaction terlah di commit atau rollback
+maka managed entity menjadi unmanaged entity
