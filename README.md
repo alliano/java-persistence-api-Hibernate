@@ -3048,6 +3048,103 @@ public void findByChildEntity() {
 ```
 ![find by child](src/main/resources/images/findByChild.png)  
 
+# @MappedSuperClass
+Pada kasus di konsep OOP, jikalau kita memiliki beberapa class namun class tersebut memiliki beberapa atribut yang sama, maka kita akan membuatkan parent class untuk menyimpan beberapa atribut yang sama, dan class yang memiliki atribut yang sama akan meng extend parent class nya. Dengan begitu kasus terselesaikan dengan menggunakan konsep pewarisan.  
+  
+Pada class entity, kita juga dapat melakukan hal serupa, namun pada class parent nya kita perlu meng annotasi dengan [@MappedSuperclass](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/mappedsuperclass) agar JPA mengetahui bahwa parent class bukanlah entity dan bukan IS-A relationship
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter @Getter
+@MappedSuperclass
+public abstract class AuditBaseEntity<T extends Serializable> {
+    
+    @Id
+    private T id;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
+```
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * Dengan meng exted class AuditBaseEntity class Post akan
+ * mewarisi semua atribut pada AuditBaseEntity
+ * */
+@Entity @Table(name = "posts")
+@Setter @Getter @NoArgsConstructor
+public class Post extends AuditBaseEntity<String> {
+    
+    private String name;
+
+    private String title;
+
+    private String content;
+}
+```
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Post;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+
+public class MappedSuperClassTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testInsert() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        Post post = new Post();
+        post.setId(UUID.randomUUID().toString().substring(0, 5));
+        post.setName("alliano-enginner");
+        post.setTitle("What's backpreasure condition");
+        post.setContent("One of us know that the app will recive many much request");
+        post.setCreatedAt(LocalDateTime.now());
+        entityManager.persist(post);
+
+        transaction.commit();
+    }
+}
+```
+
 # Locking
 Locking adalah proses mengunci data agar data tersebut tidak dapat diubah oleh proses lain hingga proses yang pertama selesai, Locking ini sangat berperan penting dalam ACID(Atomic Consistency Isolation and Durability) data.  
 Kesimpulanya Locking sangat penting dilakukan agar data didalam database konsisten.  
@@ -3207,101 +3304,3 @@ public class OptimisticUpdateTest {
 
 ### Pesimistic Locking
 Pesimistic Locking adalah proses multiple transaction yang mana tiap-tiap transaction akan melakukan locking terhadap data, dengan begitu tiap-tiap transaksi haru mengantri hingga proses transaksi yang pertama melakukan commit
-
-
-# @MappedSuperClass
-Pada kasus di konsep OOP, jikalau kita memiliki beberapa class namun class tersebut memiliki beberapa atribut yang sama, maka kita akan membuatkan parent class untuk menyimpan beberapa atribut yang sama, dan class yang memiliki atribut yang sama akan meng extend parent class nya. Dengan begitu kasus terselesaikan dengan menggunakan konsep pewarisan.  
-  
-Pada class entity, kita juga dapat melakukan hal serupa, namun pada class parent nya kita perlu meng annotasi dengan [@MappedSuperclass](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/mappedsuperclass) agar JPA mengetahui bahwa parent class bukanlah entity dan bukan IS-A relationship
-
-``` java
-package com.orm.jpaibbernate.jpahibbernate.entities;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-import lombok.Getter;
-import lombok.Setter;
-
-@Setter @Getter
-@MappedSuperclass
-public abstract class AuditBaseEntity<T extends Serializable> {
-    
-    @Id
-    private T id;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-}
-```
-
-``` java
-package com.orm.jpaibbernate.jpahibbernate.entities;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-/**
- * Dengan meng exted class AuditBaseEntity class Post akan
- * mewarisi semua atribut pada AuditBaseEntity
- * */
-@Entity @Table(name = "posts")
-@Setter @Getter @NoArgsConstructor
-public class Post extends AuditBaseEntity<String> {
-    
-    private String name;
-
-    private String title;
-
-    private String content;
-}
-```
-
-``` java
-package com.orm.jpaibbernate.jpahibbernate;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import com.orm.jpaibbernate.jpahibbernate.entities.Post;
-import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.EntityTransaction;
-
-public class MappedSuperClassTest {
-    
-    private EntityManagerFactory entityManagerFactory;
-
-    @BeforeEach
-    public void setUp() {
-        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
-    }
-
-    @Test
-    public void testInsert() {
-        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
-        EntityTransaction transaction = entityManager.getTransaction();
-        transaction.begin();
-
-        Post post = new Post();
-        post.setId(UUID.randomUUID().toString().substring(0, 5));
-        post.setName("alliano-enginner");
-        post.setTitle("What's backpreasure condition");
-        post.setContent("One of us know that the app will recive many much request");
-        post.setCreatedAt(LocalDateTime.now());
-        entityManager.persist(post);
-
-        transaction.commit();
-    }
-}
-```
