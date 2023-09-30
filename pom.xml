@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.1.3</version>
+		<version>3.1.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.orm.jpaibbernate</groupId>
@@ -14,8 +14,8 @@
 	<name>jpa-hibbernate</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
-		<java.version>19</java.version>
-		<java.compiler>19</java.compiler>
+		<java.version>21</java.version>
+		<java.compiler>21</java.compiler>
 	</properties>
 	<dependencies>
 		<dependency>

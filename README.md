@@ -3048,62 +3048,74 @@ public void findByChildEntity() {
 ```
 ![find by child](src/main/resources/images/findByChild.png)  
 
-# @MappedSuperClass
-Pada kasus di konsep OOP, jikalau kita memiliki beberapa class namun class tersebut memiliki beberapa atribut yang sama, maka kita akan membuatkan parent class untuk menyimpan beberapa atribut yang sama, dan class yang memiliki atribut yang sama akan meng extend parent class nya. Dengan begitu kasus terselesaikan dengan menggunakan konsep pewarisan.  
+# Locking
+Locking adalah proses mengunci data agar data tersebut tidak dapat diubah oleh proses lain hingga proses yang pertama selesai, Locking ini sangat berperan penting dalam ACID(Atomic Consistency Isolation and Durability) data.  
+Kesimpulanya Locking sangat penting dilakukan agar data didalam database konsisten.  
   
-Pada class entity, kita juga dapat melakukan hal serupa, namun pada class parent nya kita perlu meng annotasi dengan [@MappedSuperclass](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/mappedsuperclass) agar JPA mengetahui bahwa parent class bukanlah entity dan bukan IS-A relationship
+Pada Java Persistence Api ini, terdapat dua implementasi dari Locking: 
+ * Optimistic Locking
+ * Pesimistic Locking
 
-``` java
-package com.orm.jpaibbernate.jpahibbernate.entities;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-import lombok.Getter;
-import lombok.Setter;
+### Optimistic Locking
+Optimistic Locking adalah proses multiple transaksi yang mana tiap transaksi tidak akan melakukan lock terdahap datanya, dan sebelum melakukan commit Optimistic Locking akan mengecek apakah data sudah berhasil diubah atau belum, jikalau sudah maka proses transaksi yang lainya akan di rollback.  
+  
+Untuk mengimplementasikan Optimistic Lockig kita hanya perlu menambahkan attribut version pada class entity, yang tujuanya untuk memberitahu jpa jikalau telah terjadi perubahan.  
 
-@Setter @Getter
-@MappedSuperclass
-public abstract class AuditBaseEntity<T extends Serializable> {
-    
-    @Id
-    private T id;
+Sebelum transaction melakukan commit, low level yang terjadi yaitu JPA akan merubah value version nya lalu melakukan commit setelah itu Optimistic Locking akan mengecek verison nya, jika versionya telah berubah maka secara otomatis semua transaksi akan di rollback  
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+Pada attribut version, ada beberapa tipe data yang didukung: 
+ * Long
+ * Integer
+ * Short
+ * java.sql.Timestamp
+ * java.time.Instant
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-}
+Jadi jikalau ingin menggunakan Optimistic Locking pastikan tipe data dari attribut varsion pada class entity termasuk yang disebutkan diatas.  
+
+Berikut ini merupakan contoh penggunaanya :
+
+``` sql
+CREATE TABLE dosen(
+    id VARCHAR(10) NOT NULL,
+    name VARCHAR(100),
+    email VARCHAR(100),
+    version BIGINT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    PRIMARY KEY(id)
+)ENGINE InnoDB;
 ```
-
 ``` java
 package com.orm.jpaibbernate.jpahibbernate.entities;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * Dengan meng exted class AuditBaseEntity class Post akan
- * mewarisi semua atribut pada AuditBaseEntity
- * */
-@Entity @Table(name = "posts")
-@Setter @Getter @NoArgsConstructor
-public class Post extends AuditBaseEntity<String> {
-    
+@NoArgsConstructor @Setter @Getter
+@Entity @Table(name = "dosen")
+public class Dosen extends AuditBaseEntity<String> {
+
     private String name;
 
-    private String title;
+    private String email;
 
-    private String content;
+    /**
+     * Pada atribut version, kita harus menambahkan annotation
+     * @Version, agar jpa dapat mengetahui jikalau data pada kolom
+     * version telah berubah.
+     * 
+     * dan jikalau data pada kolom version berubah maka, transaction
+     * lainya akan di rollback
+     */
+    @Version
+    private Long version;  
 }
 ```
-
 ``` java
 package com.orm.jpaibbernate.jpahibbernate;
 
@@ -3111,13 +3123,15 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import com.orm.jpaibbernate.jpahibbernate.entities.Post;
+
+import com.orm.jpaibbernate.jpahibbernate.entities.Dosen;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
 
-public class MappedSuperClassTest {
+public class OptimisticUpdateTest {
     
     private EntityManagerFactory entityManagerFactory;
 
@@ -3127,20 +3141,70 @@ public class MappedSuperClassTest {
     }
 
     @Test
-    public void testInsert() {
+    public void test() throws InterruptedException {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Dosen dosen = new Dosen();
+        dosen.setId("001");
+        dosen.setName("ferdo");
+        dosen.setEmail("fedro@gmail.com");
+        Thread.sleep(10 * 1000);
+        entityManager.persist(dosen);
+
+        transaction.commit();
+    }
+
+    @Test
+    public void rest2() throws InterruptedException {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        Dosen dosen = new Dosen();
+        dosen.setId("002");
+        dosen.setName("ndoe");
+        dosen.setEmail("ndoe@gmail.com");
+        entityManager.persist(dosen);
+
+        transaction.commit();
+    }
+
+    @Test
+    public void testUpdate1() throws InterruptedException {
         EntityManager entityManager = this.entityManagerFactory.createEntityManager();
         EntityTransaction transaction = entityManager.getTransaction();
         transaction.begin();
 
-        Post post = new Post();
-        post.setId(UUID.randomUUID().toString().substring(0, 5));
-        post.setName("alliano-enginner");
-        post.setTitle("What's backpreasure condition");
-        post.setContent("One of us know that the app will recive many much request");
-        post.setCreatedAt(LocalDateTime.now());
-        entityManager.persist(post);
+        Dosen dosen = entityManager.find(Dosen.class, "001");
+        dosen.setName("throw exception");
+        dosen.setUpdatedAt(LocalDateTime.now());
+        dosen.setUpdatedAt(LocalDateTime.now());
+        Thread.sleep(10 * 1000L);
+        /**
+         * ini akan di rollback, karena 
+         * pada method test2 berhasil mengupdate duluan
+         */ 
+        entityManager.persist(dosen);
+        entityManager.close();
+    }
+
+    @Test
+    public void testUpdate2() throws InterruptedException {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        Dosen dosen = entityManager.find(Dosen.class, "001");
+        dosen.setName("Name Updated");
+        dosen.setUpdatedAt(LocalDateTime.now());
+        entityManager.persist(dosen);
 
         transaction.commit();
+        entityManager.close();
     }
 }
 ```
+
+### Pesimistic Locking
+Pesimistic Locking adalah proses multiple transaction yang mana tiap-tiap transaction akan melakukan locking terhadap data, dengan begitu tiap-tiap transaksi haru mengantri hingga proses transaksi yang pertama melakukan commit
+
