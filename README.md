@@ -3032,8 +3032,8 @@ public void testFind() {
 }
 ```
 *KET :*
-*Jangan pernah melakukan find berdasarkan entity parent jikalau menggunakan strategy TABEL_PER_CLASS, karena JPA akan melakukan SELCT FROM (SELECT ) dan UNION, hal tersebut akan sangat lambant dan memakan banyak letancy jikalau child entity nya banyak*  
-![findParent](src/main/resources/images/selectByParent.png)
+*Jangan pernah melakukan find berdasarkan entity parent jikalau menggunakan strategy TABEL_PER_CLASS, karena JPA akan melakukan SELCT FROM (SELECT ) dan UNION, hal tersebut akan sangat lambant dan memakan banyak letancy jikalau child entity nya banyak*    
+![findParent](src/main/resources/images/selectByParent.png)  
 
 *Keuntungan dari Strategy TABLE_PER_CLASS, yaitu saat kita find berdasarkan entity child nya JPA tidak akan melakukan JOIN terhadap tabel parent nya, berbeda halnya jikalau menggunakan JOINED strategy. Pada JOINED strategy saaat kita melakukan query kepada child entity maka parent entity akan di join.*  
 
@@ -3208,3 +3208,100 @@ public class OptimisticUpdateTest {
 ### Pesimistic Locking
 Pesimistic Locking adalah proses multiple transaction yang mana tiap-tiap transaction akan melakukan locking terhadap data, dengan begitu tiap-tiap transaksi haru mengantri hingga proses transaksi yang pertama melakukan commit
 
+
+# @MappedSuperClass
+Pada kasus di konsep OOP, jikalau kita memiliki beberapa class namun class tersebut memiliki beberapa atribut yang sama, maka kita akan membuatkan parent class untuk menyimpan beberapa atribut yang sama, dan class yang memiliki atribut yang sama akan meng extend parent class nya. Dengan begitu kasus terselesaikan dengan menggunakan konsep pewarisan.  
+  
+Pada class entity, kita juga dapat melakukan hal serupa, namun pada class parent nya kita perlu meng annotasi dengan [@MappedSuperclass](https://jakarta.ee/specifications/persistence/2.2/apidocs/javax/persistence/mappedsuperclass) agar JPA mengetahui bahwa parent class bukanlah entity dan bukan IS-A relationship
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter @Getter
+@MappedSuperclass
+public abstract class AuditBaseEntity<T extends Serializable> {
+    
+    @Id
+    private T id;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
+```
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * Dengan meng exted class AuditBaseEntity class Post akan
+ * mewarisi semua atribut pada AuditBaseEntity
+ * */
+@Entity @Table(name = "posts")
+@Setter @Getter @NoArgsConstructor
+public class Post extends AuditBaseEntity<String> {
+    
+    private String name;
+
+    private String title;
+
+    private String content;
+}
+```
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Post;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+
+public class MappedSuperClassTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testInsert() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        Post post = new Post();
+        post.setId(UUID.randomUUID().toString().substring(0, 5));
+        post.setName("alliano-enginner");
+        post.setTitle("What's backpreasure condition");
+        post.setContent("One of us know that the app will recive many much request");
+        post.setCreatedAt(LocalDateTime.now());
+        entityManager.persist(post);
+
+        transaction.commit();
+    }
+}
+```
