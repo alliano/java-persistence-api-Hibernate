@@ -3508,3 +3508,26 @@ public class ManagedUnManagedEntityTest {
 
 Perlu diketahui bahwa managed entity hanya terjadi pada lingkup transaction, jikalau transaction terlah di commit atau rollback
 maka managed entity menjadi unmanaged entity
+
+# JPAQL(JPA Query Language)
+JPA Query Language adalah standarisasi query milik JPA untuk melakukan query ke database, jadi tidak menggunakan SQL native yang spesifik
+ke database yagng digunakan.  
+  
+Dengan demikian kita tidak perlu kuatir lagi jikalau ingin ganti database, entah itu mysql, oracle, ataupun postgreql
+karena JPA kan mengenerate kan query sesuai dengan database yang kita gunakan.  
+
+Misalnya kita menggunakan database postgreql maka query yang kita buat yang mengikuti standarisasi JPAQL akan di translet
+menjadi query yang dimengerti oleh postgreql.  
+
+## Query
+Saat kita menggunakan JPA Query Language, maka kita akan menggunakan object [Query](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/class-use/query) untuk
+membuat query nya.  
+Object [Query](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/class-use/query) ini mirip seperti
+Object [PrepareStatement](https://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html) pada JDBC yang mana kita dapat menambahkan parameter ke JPAQL kita jikalau emang dibutuhkan.  
+
+## TypedQuery\<T>
+Selain Object Query untuk membuat JPAQL, kita juga bisa menggunakan object [TypedQuery\<T>](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/typedquery)
+untuk membuat statement JPAQL.  
+Sangat direkomendasikan menggunakan [TypedQuery\<T>](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/typedquery) jikalau melakukan query yang sudah jelas retun valeu entity nya.  
+
+Misalya kita melakukan query ke tabel addresses dan kita telah mengetahui bahwa return dari query nya itu Entity Adress maka TypedQuery/<T> lah yang direkomendasikan untuk digunakan.  
