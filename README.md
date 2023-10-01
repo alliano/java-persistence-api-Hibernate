@@ -3511,7 +3511,7 @@ maka managed entity menjadi unmanaged entity
 
 # JPAQL(JPA Query Language)
 JPA Query Language adalah standarisasi query milik JPA untuk melakukan query ke database, jadi tidak menggunakan SQL native yang spesifik
-ke database yagng digunakan.  
+ke database yang digunakan.  
   
 Dengan demikian kita tidak perlu kuatir lagi jikalau ingin ganti database, entah itu mysql, oracle, ataupun postgreql
 karena JPA kan mengenerate kan query sesuai dengan database yang kita gunakan.  
@@ -3531,3 +3531,106 @@ untuk membuat statement JPAQL.
 Sangat direkomendasikan menggunakan [TypedQuery\<T>](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/typedquery) jikalau melakukan query yang sudah jelas retun valeu entity nya.  
 
 Misalya kita melakukan query ke tabel addresses dan kita telah mengetahui bahwa return dari query nya itu Entity Adress maka TypedQuery/<T> lah yang direkomendasikan untuk digunakan.  
+
+## Select Query
+Saat kita melakukan query select menggunakan standarisasi JPA Query Language, kita tidak menyebutkan nama tabel nya melainkan kita sebutkan anama Entity nya.  
+Dan juga untuk mengambil semua attribut yang ada pada tabel, kita tidak menggunakan * melainkan alias dari nama Enitity nya.  
+contoh :
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Admin;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.TypedQuery;
+
+public class JpaQueryLanguageTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testFind() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        
+        TypedQuery<Admin> createQuery = entityManager.createQuery("SELECT a FROM Admin AS a", Admin.class);
+        List<Admin> admins = createQuery.getResultList();
+        admins.forEach(admin -> {
+            System.out.println("name : " + admin.getName());
+        });
+        Assertions.assertNotNull(admins);
+        transaction.commit();
+    }
+}
+```
+
+## Where clause
+Saat kita menggunakan Where clause, kita akan menggunakan nama atribut entity sebagai identifier nya; Bukan nama kolom pada tabel nya.  
+
+Dan jikalau didalam entity tersebut memiliki embeded class, dan kita ingin mengakses atribut yang ada didalam embeded class; kita bisa menggunakan ( . ) titik dan diikuti nama atribut nya.  
+
+Tentunya saat kita menggunakan WHERE clasuse, kita akan mebutuhkan parameter untuk digunakan sebagai nila identifikasi. Untuk kebutuhan tersebut kita dapat menggunakan ( : ) titik ganda dan diikuti nama parameternya.  
+
+Okay, agar lebih jelas berikut ini merupakan contoh penggunaanya:
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Departement;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.TypedQuery;
+
+public class JpaQueryLanguageTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testWhereClause() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        TypedQuery<Departement> createQuery = entityManager.createQuery("SELECT d FROM Departement AS d WHERE name = :name AND d.depatementId.companyId = :companyId", Departement.class);
+        /**
+         * perlu diperhatikan saat kita melakukan
+         * setparameter(), parameter pertama reference dengan nama parameter yang 
+         * kita deklarasikan di JpaQl nya
+         * dan parameter ke dua merupakan value dari parameternya
+         * */
+        createQuery.setParameter("name", "Departement Ifrastructure");
+        createQuery.setParameter("companyId", "DEP-IT");
+        List<Departement> resultList = createQuery.getResultList();
+        resultList.forEach(d -> {
+            System.out.println("name : " + d.getName());
+            System.out.println("company Id : " + d.getDepatementId().getCompanyId());
+        });
+        transaction.commit();
+    }   
+}
+```

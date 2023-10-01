@@ -36,4 +36,5 @@ public class Admin {
 
     @Column(name = "description")
     private Clob description;
+
 }
