@@ -3,6 +3,7 @@ package com.orm.jpaibbernate.jpahibbernate.entities;
 import java.util.List;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -23,7 +24,7 @@ public class MataKuliah {
 
     private String name;
 
-    @ManyToMany()
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "mahasiswa_matakuliah",
         joinColumns = @JoinColumn(name = "matakuliah_id", referencedColumnName = "id"),

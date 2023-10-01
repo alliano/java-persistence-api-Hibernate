@@ -1,13 +1,13 @@
 package com.orm.jpaibbernate.jpahibbernate;
 
 import java.util.List;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.orm.jpaibbernate.jpahibbernate.entities.Admin;
 import com.orm.jpaibbernate.jpahibbernate.entities.Brand;
 import com.orm.jpaibbernate.jpahibbernate.entities.Departement;
+import com.orm.jpaibbernate.jpahibbernate.entities.Mahasiswa;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -67,6 +67,24 @@ public class JpaQueryLanguageTest {
         resultList.forEach(b -> {
             b.getProduct().forEach(p -> {
                 System.out.println("product : " + p.getName());
+            });
+        });
+        transaction.commit();
+    }
+
+    @Test
+    public void testJoinFetch() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        TypedQuery<Mahasiswa> createQuery = entityManager
+            .createQuery("select m from Mahasiswa as m inner join fetch m.prodi", Mahasiswa.class);
+        List<Mahasiswa> resultList = createQuery.getResultList();
+        resultList.forEach(m -> {
+            System.out.println("name : " + m.getName());
+            m.getMataKuliah().forEach(mt -> {
+                System.out.println("mata kuliah : " + mt.getName());
             });
         });
         transaction.commit();

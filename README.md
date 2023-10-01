@@ -3679,3 +3679,6 @@ public class JpaQueryLanguageTest {
     }
 }
 ```
+
+## JOIN FETCH
+
