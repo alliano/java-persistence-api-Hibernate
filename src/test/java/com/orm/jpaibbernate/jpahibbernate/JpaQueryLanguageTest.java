@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.orm.jpaibbernate.jpahibbernate.entities.Admin;
+import com.orm.jpaibbernate.jpahibbernate.entities.Brand;
 import com.orm.jpaibbernate.jpahibbernate.entities.Departement;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
@@ -52,5 +53,22 @@ public class JpaQueryLanguageTest {
             System.out.println("company Id : " + d.getDepatementId().getCompanyId());
         });
         transaction.commit();
-    }   
+    }
+
+    @Test
+    public void testJoinClause() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        TypedQuery<Brand> createQuery = entityManager
+            .createQuery("select b from Brand as b inner join b.product", Brand.class);
+        List<Brand> resultList = createQuery.getResultList();
+        resultList.forEach(b -> {
+            b.getProduct().forEach(p -> {
+                System.out.println("product : " + p.getName());
+            });
+        });
+        transaction.commit();
+    }
 }
