@@ -3780,3 +3780,86 @@ public class JpaQueryLanguageTest {
 }
 ```
 
+## Named Query
+JpaQl memiliki fitur yang namanya NamedQuery. dengan menggunakan NamedQuery kita bisa membuat alias untuk query JpaQl yang kita buat.  
+NamedQuery ini memungkinkan kita untuk sekali membuat Query dan query tersebut dapat kita pakai berkali-kali hanya dengan menyebutkan nama aliasnya.  
+  
+Untuk membuat NamedQuery kita gunakan annotation [@NamedQueries()](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/namedqueries) pada Entity, setelah itu gunakan annotation [@NamedQuery()](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/namedquery) untuk membuat query nya.  
+berikut ini adalah contoh nya:
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NamedQueries(value = {
+    /**
+     * name -> nama named query nya
+     * query -> sintax query
+     * */
+    @NamedQuery(name = "Post.findByTitle", query = "select p from Post as p where p.title = :title"),
+    @NamedQuery(name = "Post.findAll", query = "select p from Post as p order by p.name desc")
+})
+@Entity @Table(name = "posts")
+@Setter @Getter @NoArgsConstructor
+public class Post extends AuditBaseEntity<String> {
+    
+    private String name;
+
+    private String title;
+
+    private String content;
+}
+```
+Dan untuk menggunakan NamedQuery nya, kita dapat menggunakan method createNamedQuery(nameNamedQuery, class) milik EntityManager.
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Post;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.TypedQuery;
+
+public class JpaQueryLanguageTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testNamedQuery() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        /**
+         * Post.findByTitle merupakan name dari named query yang kita buat di 
+         * entity Post
+         * */
+        TypedQuery<Post> namedQuery = entityManager.createNamedQuery("Post.findByTitle", Post.class);
+        namedQuery.setParameter("title", "example post 10000");
+        List<Post> resultList = namedQuery.getResultList();
+
+        resultList.forEach(p -> {
+            System.out.println("name : " + p.getName());
+            System.out.println("title : " + p.getTitle());
+            System.out.println("content : " + p.getContent());
+        });
+        transaction.commit();
+    }
+}
+```

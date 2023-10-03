@@ -129,4 +129,23 @@ public class JpaQueryLanguageTest {
         });
         transaction.commit();
     }
+
+    @Test
+    public void testNamedQuery() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        TypedQuery<Post> namedQuery = entityManager.createNamedQuery("Post.findByTitle", Post.class);
+        namedQuery.setParameter("title", "example post 10000");
+        List<Post> resultList = namedQuery.getResultList();
+
+        resultList.forEach(p -> {
+            System.out.println("name : " + p.getName());
+            System.out.println("title : " + p.getTitle());
+            System.out.println("content : " + p.getContent());
+        });
+
+        transaction.commit();
+    }
 }
