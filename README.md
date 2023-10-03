@@ -3725,3 +3725,58 @@ public class JpaQueryLanguageTest {
 }
 ```
 
+## Limit & Offset
+Pada database relasional jikalau  kita ingin melakukan paging, maka kita akan menggunakan fitur `Limit` dan `Offset`.  
+Fitur tersebut juga tersedia pada JpaQl; Saat kita menggunakan fitur tersebut, kita tidak menuliskanya dalam sintax JpaQl melainkan menggunakan method setFirstResult() dan setMaxResults() milik TypedQuery\<T>  
+ * setMaxResults(), untuk mengatur Limit
+ * setFirstResult(), untuk mengatur Offset
+
+Berikut ini merupakan contoh penggunaanya :  
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Post;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.TypedQuery;
+
+public class JpaQueryLanguageTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testLimit() {
+
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        TypedQuery<Post> createQuery = entityManager.createQuery("select p from Post as p order by p.name asc", Post.class);
+        // artinya ini limit nya 10
+        createQuery.setMaxResults(10);
+        //  dan offset nya 10
+        createQuery.setFirstResult(10);
+        List<Post> resultList = createQuery.getResultList();
+        resultList.forEach(p -> {
+            System.out.println("name : " + p.getName());
+            System.out.println("title : " + p.getTitle());
+            System.out.println("content : " + p.getContent());
+            System.out.println("\n");
+        });
+        transaction.commit();
+    }
+}
+```
+

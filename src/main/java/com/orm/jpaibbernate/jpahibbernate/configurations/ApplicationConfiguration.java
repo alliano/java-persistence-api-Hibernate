@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
+import net.datafaker.Faker;
 
 @Configuration
 public class ApplicationConfiguration {
@@ -13,5 +14,10 @@ public class ApplicationConfiguration {
     public EntityManagerFactory entityManagerFactory() {
         EntityManagerFactory entityManagerFactory = Persistence.createEntityManagerFactory("BELAJAR-JPA");
         return entityManagerFactory;
+    }
+
+    @Bean(value = "faker")
+    public Faker faker() {
+        return new Faker();
     }
 }
