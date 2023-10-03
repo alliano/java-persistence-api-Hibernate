@@ -1,6 +1,6 @@
 package com.orm.jpaibbernate.jpahibbernate;
 
-import java.util.List;
+import java.util.List;  
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,6 +8,7 @@ import com.orm.jpaibbernate.jpahibbernate.entities.Admin;
 import com.orm.jpaibbernate.jpahibbernate.entities.Brand;
 import com.orm.jpaibbernate.jpahibbernate.entities.Departement;
 import com.orm.jpaibbernate.jpahibbernate.entities.Mahasiswa;
+import com.orm.jpaibbernate.jpahibbernate.entities.Post;
 import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -87,6 +88,23 @@ public class JpaQueryLanguageTest {
                 System.out.println("mata kuliah : " + mt.getName());
             });
         });
+        transaction.commit();
+    }
+
+    @Test
+    public void testOrderByClause() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+
+        TypedQuery<Post> createQuery = entityManager.createQuery("select p from Post as p order by p.name desc", Post.class);
+        List<Post> resultList = createQuery.getResultList();
+        resultList.forEach(p -> {
+            System.out.println("Username : " + p.getName());
+            System.out.println("Title : " + p.getTitle());
+            System.out.println("Content : " + p.getContent());
+        });
+
         transaction.commit();
     }
 }

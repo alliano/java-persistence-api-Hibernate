@@ -3680,5 +3680,48 @@ public class JpaQueryLanguageTest {
 }
 ```
 
-## JOIN FETCH
+## Order By clause
+Kita pasti sangat familiar dengan fungsi `ORDER BY` untuk mengurutkan suatu data pada sql. Pada JpaQl juga memiliki fitur tersebut.  
+Cara penggunaanya pun sama seperti di Sql kita cukup gunakan keywror ORDER By pada akhir statement query dan diikuti strategy nya ASC atau DESC.
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate;
+
+import java.util.List;  
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import com.orm.jpaibbernate.jpahibbernate.entities.Post;
+import com.orm.jpaibbernate.jpahibbernate.utils.EntityManagerUtil;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.TypedQuery;
+
+public class JpaQueryLanguageTest {
+    
+    private EntityManagerFactory entityManagerFactory;
+
+    @BeforeEach
+    public void setUp() {
+        this.entityManagerFactory = EntityManagerUtil.getEntityManagerFactory();
+    }
+
+    @Test
+    public void testOrderByClause() {
+        EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        // ini artinya data post akan diurutkan berdasarkan kolom nama dan menggunakan strategy DESCENDING
+        TypedQuery<Post> createQuery = entityManager.createQuery("select p from Post as p order by p.name desc", Post.class);
+        List<Post> resultList = createQuery.getResultList();
+        resultList.forEach(p -> {
+            System.out.println("Username : " + p.getName());
+            System.out.println("Title : " + p.getTitle());
+            System.out.println("Content : " + p.getContent());
+        });
+        transaction.commit();
+    }
+}
+```
 
