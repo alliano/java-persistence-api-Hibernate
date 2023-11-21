@@ -3863,3 +3863,522 @@ public class JpaQueryLanguageTest {
     }
 }
 ```
+
+## Constructor Expression
+Kita telah mengetahui bahwa saat kita menggunakan SQL kita dapat menampilkan data pada tabel di database bnamun hanya kolom tertentu saja, misalnya pada tabel mahasiswa kita hanya ingin menampilkan kolom nama dan prodi.  
+``` sql
+SELECT m.name AS nama, p.name AS prodi 
+    FROM mahasiswa AS m INNER JOIN prodi AS p ON(m.id = p.mahasiswa_id);
+```
+  
+Pertanyaanya bagaimana cara melakukan hal tersebut di JpaQl. Mungkin teman-teman berfikir "Di buat jadi Object array aja result dari query nya, nanti object nya di convert manual"
+``` java
+@Test
+public void testConstructor() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    TypedQuery<Object[]> createQuery = entityManager.createQuery("select m.name as name, p.name as prodi from Mahasiswa as m inner join m.prodi as p", Object[].class);
+    List<Object[]> resultList = createQuery.getResultList();
+    resultList.forEach(m -> {
+        System.out.println("nama : "+ m[0]);
+        System.out.println("prodi : "+ m[1]);
+    });
+    transaction.commit();
+}
+```
+
+Hal tersebut memanglah dapat dilakukan, namun hal tersebut sangat rentan error dan bukan praktik terbaik.  
+Daripada menggunakan Object[].class lebih baik menggunakan Constructor expression. Kita dapat langsung melakukan instansiasi sebuah object dengan constructor parameter disaat proses query dilakukan ole JPA. Dan cara instansiasi nya menggunakan sebuah package.
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.dtos;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter @Getter @AllArgsConstructor
+public class MahasiswaDto {
+
+    private String name;
+
+    private String prodi;
+}
+```
+``` java
+@Test
+public void testConstructorExpression() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    TypedQuery<MahasiswaDto> createQuery = entityManager.createQuery(
+        "select new com.orm.jpaibbernate.jpahibbernate.dtos.MahasiswaDto(m.name, p.name) from Mahasiswa as m inner join m.prodi as p order by p.name asc", 
+        MahasiswaDto.class);
+    List<MahasiswaDto> resultList = createQuery.getResultList();
+    resultList.forEach(m -> {
+        System.out.println("Name :" + m.getName());
+        System.out.println("Prodi :" + m.getProdi());
+    });
+    transaction.commit();
+}
+```
+Hal tersebut merupakan praktik terbaik dan tidak rentan error.
+
+## Agregate Query
+Jpa mendukung agregate function, dan cara penggunaanya pun sama seperti mengunakan database sql. Ada banyak sekali fungsi [agregate](https://docs.jboss.org/hibernate/orm/6.0/userguide/html_single/Hibernate_User_Guide.html#hql-aggregate-functions-collections) yang bisa kita gunakan di JpaQl.  
+Berikut ini salahsatu contoh penggunaan agregate nya
+``` java
+package com.orm.jpaibbernate.jpahibbernate.dtos;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter @Getter @AllArgsConstructor
+public class MahasiswaSizeDto {
+    
+    private Long mahasiswaSize;
+}
+```
+``` java
+@Test
+public void testAgregateQuery() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    TypedQuery<MahasiswaSizeDto> createQuery = entityManager.createQuery(
+        "select new com.orm.jpaibbernate.jpahibbernate.dtos.MahasiswaSizeDto(count(m.id)) from Mahasiswa as m", 
+        MahasiswaSizeDto.class);
+    MahasiswaSizeDto mahasiswaSizeDto = createQuery.getSingleResult();
+    System.out.println("Jumlah mahasiswa : "+ mahasiswaSizeDto.getMahasiswaSize());
+    transaction.commit();
+    entityManager.close();
+}
+```
+
+## Group By
+Saat kita menggunakan aggregate function, kita juga bisa menggunakan group by clause di JpaQl, caranya pun cukup sama seperti kita menggunakan sql biasa.
+``` java
+package com.orm.jpaibbernate.jpahibbernate.dtos;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter @Getter @AllArgsConstructor
+public class MahasiswaDto {
+
+    private String name;
+
+    private String prodi;
+}
+```
+``` java
+ @Test
+public void testGrouping() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    TypedQuery<ProdiDto> createQuery = entityManager.createQuery(
+            "select new com.orm.jpaibbernate.jpahibbernate.dtos.ProdiDto(count(p.name), p.name) from Mahasiswa as m inner join m.prodi as p group by p.name", 
+        ProdiDto.class);
+    List<ProdiDto> resultList = createQuery.getResultList();
+    resultList.forEach(m -> {
+        System.out.println("prodi " + m.getNamaPodi()+" jumlah mahasiwa "+m.getJumlah_mahasiswa());
+    });
+    transaction.commit();
+    entityManager.close();
+}
+```
+## Native Query
+Terkadang di spesifik case atau di kasus yang sangat kompleks kita butuh berintraksi secara langsung dengan database yang kita gunakan menggunakan query murni(bukan JpaQl).  
+Hal tersebut dapat kita lakukan dengan memanfaatkan method createNativeQuery(quey, entity.class).  
+method createNativeQuery akan mengembalikan object Query.
+``` java
+@Test
+public void testNativeQuery() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    Query query = entityManager.createNativeQuery(
+        "SELECT * FROM mahasiswa", Mahasiswa.class);
+    List<Mahasiswa> resultList = query.getResultList();
+    resultList.forEach(m -> {
+        System.out.println("nama : "+ m.getName()+"\n");
+    });
+    transaction.commit();
+    entityManager.close();
+}
+```
+
+## @NamedNativeQuery
+Kita juga bisa membuat namedQuery dengan native SQL atau SQL murni(tidak menggunakan JpaQl), caranya pun cukup mudah sama seperti halnya kita membuat namedQuery dengan JpaQl.  
+Yang membedahakan hanyalah annotation yang digunakan untuk membuat query nya, pada JpaQl kita menggunakan annotation [@NamedQuery](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/namedqueries) namun saat kita ingin membuat named native query kita menggunakan annotation [@NamedNativeQuery](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/namedNativeQuery)
+
+``` java
+package com.orm.jpaibbernate.jpahibbernate.entities;
+
+import java.util.List;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.NamedNativeQueries;
+import jakarta.persistence.NamedNativeQuery;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NamedNativeQueries(
+    value = {
+        @NamedNativeQuery(name = "native.mahasiswa.findAll", query = "SELECT * FROM mahasiswa", resultClass = Mahasiswa.class)
+    }
+)
+@Setter @Getter
+@AllArgsConstructor @NoArgsConstructor 
+@Entity @Table(name = "mahasiswa")
+public class Mahasiswa {
+    
+    @Id @GeneratedValue(strategy =  GenerationType.IDENTITY)
+    private Integer id;
+
+    private String name;
+
+    private String email;
+ 
+    @OneToOne(mappedBy = "mahasiswa", fetch = FetchType.LAZY)
+    private Prodi prodi;
+
+    @ManyToMany(mappedBy = "mahasiswa", fetch = FetchType.LAZY)
+    private List<MataKuliah> mataKuliah;
+}
+```
+
+``` java
+@Test
+public void testNamedNativeQuery() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    TypedQuery<Mahasiswa> namedQuery = entityManager.createNamedQuery("native.mahasiswa.findAll", Mahasiswa.class);
+    List<Mahasiswa> mahasiwaList = namedQuery.getResultList();
+    mahasiwaList.forEach(m -> {
+        System.out.println("nama : "+ m.getName());
+    });
+    transaction.commit();
+    entityManager.close();
+}
+```
+
+## Criteria query
+Pada kasus tertentu kita akan membutuhkan bentuk query yang kompleks dan dinamis, misalnya saat kita melakukan pencarian data, mungkin saja field yang kita cari sangat dinamis sesuai yang diinputkan oleh user.  
+Untuk kasus tersebut Criteria query sangat bisa diandalkan.  
+  
+Untuk menggunakan criteria query, kita akan membutuhkan object [CritetiaBuilder](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/criteria/criteriabuilder) untuk membut object CriteriaQuery. Kita bisa membuat CriteriaBuilder menggunakan object EntityManager.  
+  
+[CriteriaQuery](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/criteria/criteriaQuery) ini adalah sebuah object yang dapat digunakan untuk menambahkan informasi query yang akan dilakukan, misalnya kita ingin select pada entity yang mana, filed yang mana dan where clause seperti apa dan sebagainya.  
+  
+Setelah selesai membuat object CriteriaQuery kita dapat menggunakan object tersebut untuk melakukan query, berikut ini adalah contohnya 
+``` java
+@Test
+public void testCriteriaQuery() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    // membuat object CriteriaBuilder terlebih dahulu menggunakan EntityManager
+    CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+    // membuat object CriteriaQuery
+    CriteriaQuery<Mahasiswa> criteriaQuery = criteriaBuilder.createQuery(Mahasiswa.class);
+    Root<Mahasiswa> root = criteriaQuery.from(Mahasiswa.class);
+    criteriaQuery.select(root);
+    
+    TypedQuery<Mahasiswa> createQuery2 = entityManager.createQuery(criteriaQuery);
+    List<Mahasiswa> resultList = createQuery2.getResultList();
+    resultList.forEach(m -> {
+        System.out.println("nama : "+ m.getName());
+    });
+    transaction.commit();
+    entityManager.close();
+}
+```
+
+## Criteria Select Non Entity
+Saat kita menggunakan `CriteriaQuery.select(root)` maka JPA akan melakukan operasi select query ke entity yang kita definisikan pada [Root\<T>](https://jakarta.ee/specifications/platform/9/apidocs/jakarta/persistence/criteria/root) `(root.from(entity.class))`.  
+  
+Criteria query juga bisa digunakan untuk melakukan select ke non entity seperti yang sudah kita bahas di pembahasan diatas. Berikut ini merupakan contoh nya : 
+``` java
+@Test
+public void testCriteriaSelectNonEntity() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    
+    // kita buat criteraBuilder terlebih dahulu
+    CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+    /**
+     * Disini kita tentukan tipe return value dari query kita,
+     * berhubung kita tidak perdulikan return value nya kita bisa 
+     * menggunakan Object array.
+     * */
+    CriteriaQuery<Object[]> criteria = criteriaBuilder.createQuery(Object[].class);
+    // disini kita definisikan Enitty mana yang kita ingin select, misalnya disini kita ingin 
+    // melakukan select ke entity Mahasiswa
+    Root<Mahasiswa> root = criteria.from(Mahasiswa.class);
+    // disini kita definisikan kolom dari entity yang ingin kita select
+    criteria.select(criteriaBuilder.array(root.get("name"), root.get("email")));
+
+    TypedQuery<Object[]> createQuery = entityManager.createQuery(criteria);
+    List<Object[]> resultList = createQuery.getResultList();
+    for (Object[] mahasiswa : resultList) {
+        System.out.println("Name :" + mahasiswa[0]);
+        System.out.println("Email :" + mahasiswa[1]);
+    }
+    transaction.commit();
+}
+```
+Contoh query diatas jikalau kita tuliskan dalam Native query :
+``` sql
+SELECT name, email FROM mahasiswa;
+```
+
+Atau jikalau dalam JpaQL :
+``` sql
+select m.name, m.email from Mahasiswa as m;
+```
+
+Misalnya jikalau kita ingin menentukan return value nya lebih spesifik, maka kita bisa membuat query seperti berikut ini :
+``` java
+@Test
+public void testCriteriaSelectNonEntity2() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    // disni kita bisa tentukan return value dari query kita
+    CriteriaQuery<MahasiswaNameEmailDto> criteriaQuery = builder.createQuery(MahasiswaNameEmailDto.class);
+    Root<Mahasiswa> root = criteriaQuery.from(Mahasiswa.class);
+    /**
+     * disni kita menggunakan builder.construct agar JPA langusng melakukan mapping 
+     * object return value nya menjadi class yang sudah kita definisikan
+     * setelah itu sebutkan tipe retun value dari qeury yang kita buat pada argument pertama
+     * */
+    criteriaQuery.select(builder.construct(MahasiswaNameEmailDto.class, root.get("name"), root.get("email")));
+
+    TypedQuery<MahasiswaNameEmailDto> query = entityManager.createQuery(criteriaQuery);
+    List<MahasiswaNameEmailDto> mahasiswaList = query.getResultList();
+    mahasiswaList.forEach(m -> {
+        System.out.println("Name : " + m.getName());
+        System.out.println("Email : " + m.getEmail());
+    });
+    transaction.commit();
+}
+```
+## Criteria Where Clause
+Untuk menambahkan WHERE clause di criteria query kita bisa menggunakan method where() dari CriteriaQuery\<T>
+``` java
+@Test
+public void testCriteriaQueryWhereClasuse() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    CriteriaQuery<MahasiswaNameEmailDto> criteria = builder.createQuery(MahasiswaNameEmailDto.class);
+    Root<Mahasiswa> mahasiswaRoot = criteria.from(Mahasiswa.class);
+    criteria.select(builder.construct(MahasiswaNameEmailDto.class, mahasiswaRoot.get("name"), mahasiswaRoot.get("email")));
+    // menambahkan where clause
+    criteria.where(
+        // menentukan predikatnya
+        builder.equal(mahasiswaRoot.get("name"), "Abdillah Alli"),
+        builder.equal(mahasiswaRoot.get("email"), "lian@gmail.com")
+    );
+    TypedQuery<MahasiswaNameEmailDto> createQuery = entityManager.createQuery(criteria);
+    List<MahasiswaNameEmailDto> mahasiswaList = createQuery.getResultList();
+    mahasiswaList.forEach(m -> {
+        System.out.println("Name : "+ m.getName());
+        System.out.println("Email : "+m.getEmail());
+    });
+    transaction.commit();
+}
+```
+untuk menambahkan operator logika atau kondisi :
+ * OR
+ * AND
+ * NOT 
+ * dsb
+Kita bisa menggunakan CriteriaBuilder. Secara default operator yang digunakan saat tidak definisikan operatornya maka operator logika yang diguanakan AND.  
+Jika kita ingin mengguanakan operator logika selain AND maka kita bisa menggunakan CriteriaBuilder.
+``` java
+@Test
+public void testCriteriaQueryWhereClasuseWithOR() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    CriteriaQuery<MahasiswaNameEmailDto> criteria = builder.createQuery(MahasiswaNameEmailDto.class);
+    Root<Mahasiswa> mahasiswaRoot = criteria.from(Mahasiswa.class);
+    criteria.select(builder.construct(MahasiswaNameEmailDto.class, mahasiswaRoot.get("name"), mahasiswaRoot.get("email")));
+    criteria.where(
+        builder.or(
+            builder.equal(mahasiswaRoot.get("name"), "Abdillah Alli"),
+            builder.equal(mahasiswaRoot.get("email"), "lian@gmail.com")
+        )
+    );
+    TypedQuery<MahasiswaNameEmailDto> createQuery = entityManager.createQuery(criteria);
+    List<MahasiswaNameEmailDto> mahasiswaList = createQuery.getResultList();
+    mahasiswaList.forEach(m -> {
+        System.out.println("Name : "+ m.getName());
+        System.out.println("Email : "+m.getEmail());
+    });
+    transaction.commit();
+}
+```
+## Criteria Join clause
+Untuk melakukan join pada criteria query kita bisa menggunakan method join() milik Root\<T> dengan parameter nama atribut entity yang menyimpan informasi join column nya.
+
+``` java
+@Test
+public void testCriteriaJoinClause() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    CriteriaQuery<Product> criteria = builder.createQuery(Product.class);
+    Root<Product> procudtRoot = criteria.from(Product.class);
+    // melakukan join
+    Join<Product, Brand> brandRoot = procudtRoot.join("brand"); // brand disini merupakan kolom foreign key
+    criteria.select(procudtRoot);
+    criteria.where(
+        builder.or(
+            builder.equal(procudtRoot.get("name"), "POCO X3 NFC"),
+            builder.equal(brandRoot.get("name"), "POCO")
+        )
+    );
+    TypedQuery<Product> products = entityManager.createQuery(criteria);
+    List<Product> productList = products.getResultList();
+    productList.forEach(p -> {
+     System.out.println("Brand : "+p.getName());
+     System.out.println("Product : "+p.getBrand().getName());
+    });
+    transaction.commit();
+}
+```
+
+## Criteria Parameter
+Pada where clause kita selalu meng set secara langsung value untuk predikat nya, alih-alih meng set langsung predikatnya kita bisa menggunakan ParameterExpression\<T> dari method CriteriaBuilder.parameter(), dengan begitu value dari predikatnya bisa lebih fleksibel.
+Berikut ini adalah contohnya :   
+``` java
+@Test
+public void testParameterExpression() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    CriteriaQuery<Product> criteria = builder.createQuery(Product.class);
+    Root<Product> rootProduct = criteria.from(Product.class);
+    // membuat parameter
+    ParameterExpression<String> productNameParameter = builder.parameter(String.class, "productName");
+
+    criteria.select(rootProduct);
+    criteria.where(
+        builder.equal(rootProduct.get("name"), productNameParameter)
+    );
+
+    TypedQuery<Product> productQuery = entityManager.createQuery(criteria);
+    // meng set nilai parameter
+    productQuery.setParameter(productNameParameter, "POCO X3 NFC");
+    List<Product> productList = productQuery.getResultList();
+    productList.forEach(p -> {
+        System.out.println("Product name : "+ p.getName());
+        System.out.println("Product Desc : "+ p.getDescription());
+    });
+
+    transaction.commit();
+}
+```
+
+## Criteria Group by
+Aggregate funtion misalnya seperti :
+ * avg()
+ * min()
+ * max()
+ * dll
+
+bisa kita lakukan pada criteria query, untuk menggunakan aggregate function kita dapat menggunakan nya melalui object CriteriaBuilder, sedangkan penggunaan Group By dan Having kita bisa menggunakanya melalui object CriteriaQuery.  
+Berikut ini contohnya :  
+
+``` java
+@Test
+public void testCriteriaGroupBy() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    CriteriaQuery<PriceListDto> criteria = builder.createQuery(PriceListDto.class);
+    Root<Product> rootProduct = criteria.from(Product.class);
+    criteria.select(
+        builder.construct(PriceListDto.class, 
+        // agregaate function
+        builder.min(rootProduct.get("price")),
+        builder.max(rootProduct.get("price")),
+        builder.avg(rootProduct.get("price")))
+    );
+
+    // melakukan grouping berdasarka id
+    criteria.groupBy(rootProduct.get("id"));
+    // menggunakan keyword having untuk melakukan identifier(ini sama kek where)
+    criteria.having(builder.lessThan(builder.min(rootProduct.get("price")), 4000000L));
+    
+    TypedQuery<PriceListDto> priceListDto = entityManager.createQuery(criteria);
+    List<PriceListDto> priceList = priceListDto.getResultList();
+    priceList.forEach(p -> {
+        System.out.println("max price : " + p.getMax());
+        System.out.println("min price: " + p.getMin());
+        System.out.println("avrage price : " + p.getAvrage());
+    });
+    transaction.commit();
+}
+```
+
+## Criteria non query
+Pada criteria query juga bisa digunakan untuk melakukan perintah non query misalnya seperti : 
+ * update
+ * delete
+
+Untuk melakukan hal tersebut kita bisa memanfaatkan method :
+ * createCriteriaUpdate() untuk melakukan update
+ * createCriteriaDelete() untuk melakukan delete
+
+Method tersebut dimiliki oleh object CriteriaBuilder.  
+Berikut ini adalah salah satu contoh nya : 
+``` java
+@Test
+public void testCriteriaNonQuery() {
+    EntityManager entityManager = this.entityManagerFactory.createEntityManager();
+    EntityTransaction transaction = entityManager.getTransaction();
+    transaction.begin();
+    CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+    CriteriaUpdate<Mahasiswa> criteria = builder.createCriteriaUpdate(Mahasiswa.class);
+    Root<Mahasiswa> mahasiswaRoot = criteria.from(Mahasiswa.class);
+    
+    criteria.set(mahasiswaRoot.get("name"), "alliano@gmail.com");
+    criteria.where(
+        builder.equal(mahasiswaRoot.get("id"), 3)
+    );
+    Query query = entityManager.createQuery(criteria);
+    int executeUpdate = query.executeUpdate();
+    System.out.println("Success update "+executeUpdate+" record");
+    transaction.commit();
+}
+```
