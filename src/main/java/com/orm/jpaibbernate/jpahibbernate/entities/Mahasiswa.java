@@ -8,6 +8,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.NamedNativeQueries;
+import jakarta.persistence.NamedNativeQuery;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -15,6 +17,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@NamedNativeQueries(
+    value = {
+        @NamedNativeQuery(name = "native.mahasiswa.findAll", query = "SELECT * FROM mahasiswa", resultClass = Mahasiswa.class)
+    }
+)
 @Setter @Getter
 @AllArgsConstructor @NoArgsConstructor 
 @Entity @Table(name = "mahasiswa")
